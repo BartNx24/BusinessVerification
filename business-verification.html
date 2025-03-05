@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Business Global Verification</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      margin-top: 0;
+      color: #333;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+    .section {
+      margin-bottom: 2rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.3rem;
+      font-weight: bold;
+    }
+    input[type="text"],
+    select,
+    input[type="file"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+    }
+    .checkbox-group input[type="checkbox"] {
+      margin-right: 0.5rem;
+    }
+    button {
+      padding: 0.8rem;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    @media (max-width: 600px) {
+      .container {
+        margin: 1rem;
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Business Verification</h1>
+    <p>Please complete the following steps to verify your business globally.</p>
+    
+    <form id="verificationForm">
+      <!-- Section 1: Business Details -->
+      <div class="section" id="business-details">
+        <h2>Business Details</h2>
+        <label for="businessName">Business Name</label>
+        <input type="text" id="businessName" name="businessName" placeholder="Enter your business name" required />
+
+        <label for="country">Country</label>
+        <select id="country" name="country" required>
+          <option value="">Select your country</option>
+          <option value="USA">USA</option>
+          <option value="UK">UK</option>
+          <option value="India">India</option>
+          <option value="Canada">Canada</option>
+          <option value="Germany">Germany</option>
+          <option value="Brazil">Brazil</option>
+          <option value="Nigeria">Nigeria</option>
+          <option value="Australia">Australia</option>
+        </select>
+        <div id="documentRequirements"></div>
+      </div>
+      
+      <!-- Section 2: Document Upload -->
+      <div class="section" id="document-upload">
+        <h2>Upload Business Documents</h2>
+        <label for="businessRegDoc">Business Registration Document</label>
+        <input type="file" id="businessRegDoc" name="businessRegDoc" required />
+
+        <label for="taxId">Tax ID / EIN / VAT Number</label>
+        <input type="text" id="taxId" name="taxId" placeholder="Enter your Tax ID" required />
+
+        <label for="businessLicense">Business License (if applicable)</label>
+        <input type="file" id="businessLicense" name="businessLicense" />
+
+        <label for="addressProof">Proof of Address</label>
+        <input type="file" id="addressProof" name="addressProof" required />
+      </div>
+      
+      <!-- Section 3: Owner Identity Verification -->
+      <div class="section" id="owner-verification">
+        <h2>Owner Identity Verification</h2>
+        <label for="ownerName">Owner's Full Name</label>
+        <input type="text" id="ownerName" name="ownerName" placeholder="Enter owner's name" required />
+
+        <label for="ownerID">Upload Government-Issued ID (Passport, Driver’s License, etc.)</label>
+        <input type="file" id="ownerID" name="ownerID" required />
+
+        <label for="selfie">Upload a Selfie for Face Matching</label>
+        <input type="file" id="selfie" name="selfie" required />
+      </div>
+      
+      <!-- Section 4: Compliance and Consent -->
+      <div class="section" id="compliance">
+        <h2>Compliance</h2>
+        <div class="checkbox-group">
+          <input type="checkbox" id="terms" name="terms" required />
+          <label for="terms">I agree to the Terms &amp; Conditions and consent to data processing as per GDPR/CCPA and local laws.</label>
+        </div>
+      </div>
+      
+      <button type="submit">Submit Verification</button>
+    </form>
+  </div>
+  
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <!-- Firebase Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <!-- Firebase Storage -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBs7pRnnJKpY39oQ-8TUaTSi_3ZgYfnt8s",
+      authDomain: "nexus-601bd.firebaseapp.com",
+      projectId: "nexus-601bd",
+      storageBucket: "nexus-601bd.appspot.com",
+      messagingSenderId: "873657897341",
+      appId: "1:873657897341:web:f071a476f9372e3b523c14",
+      measurementId: "G-Q3PNQ3NYYZ"
+    };
+
+    // Initialize Firebase if not already initialized
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    } else {
+      firebase.app();
+    }
+
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    // Function to upload a file to Firebase Storage and return the download URL
+    async function uploadFile(file, path) {
+      try {
+        console.log(`Uploading file: ${file.name} to path: ${path}`);
+        const storageRef = storage.ref();
+        const fileRef = storageRef.child(path);
+        await fileRef.put(file);
+        const downloadURL = await fileRef.getDownloadURL();
+        console.log(`File uploaded successfully: ${downloadURL}`);
+        return downloadURL;
+      } catch (uploadError) {
+        console.error("File upload failed:", uploadError);
+        throw uploadError;
+      }
+    }
+
+    // Handle form submission
+    document.getElementById('verificationForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Retrieve form values
+      const businessName = document.getElementById('businessName').value;
+      const country = document.getElementById('country').value;
+      const taxId = document.getElementById('taxId').value;
+      const ownerName = document.getElementById('ownerName').value;
+      const timestamp = Date.now();
+
+      // Retrieve file objects
+      const businessRegDocFile = document.getElementById('businessRegDoc').files[0];
+      const businessLicenseFile = document.getElementById('businessLicense').files[0];
+      const addressProofFile = document.getElementById('addressProof').files[0];
+      const ownerIDFile = document.getElementById('ownerID').files[0];
+      const selfieFile = document.getElementById('selfie').files[0];
+
+      try {
+        // Upload files and get download URLs
+        const businessRegDocURL = businessRegDocFile ? await uploadFile(businessRegDocFile, `verifications/${timestamp}_businessRegDoc_${businessRegDocFile.name}`) : "";
+        const businessLicenseURL = businessLicenseFile ? await uploadFile(businessLicenseFile, `verifications/${timestamp}_businessLicense_${businessLicenseFile.name}`) : "";
+        const addressProofURL = addressProofFile ? await uploadFile(addressProofFile, `verifications/${timestamp}_addressProof_${addressProofFile.name}`) : "";
+        const ownerIDURL = ownerIDFile ? await uploadFile(ownerIDFile, `verifications/${timestamp}_ownerID_${ownerIDFile.name}`) : "";
+        const selfieURL = selfieFile ? await uploadFile(selfieFile, `verifications/${timestamp}_selfie_${selfieFile.name}`) : "";
+
+        // Save the form data along with file URLs in Firestore
+        await db.collection('business_verifications').add({
+          businessName,
+          country,
+          taxId,
+          ownerName,
+          businessRegDocURL,
+          businessLicenseURL,
+          addressProofURL,
+          ownerIDURL,
+          selfieURL,
+          submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        alert('Verification submitted successfully!');
+        document.getElementById('verificationForm').reset();
+      } catch (error) {
+        console.error('Error uploading files or saving data:', error);
+        alert('There was an error submitting your verification. Please try again.');
+      }
+    });
+
+    // Update document requirements dynamically based on country selection
+    const countrySelect = document.getElementById('country');
+    const docReqDiv = document.getElementById('documentRequirements');
+
+    countrySelect.addEventListener('change', function() {
+      const country = countrySelect.value;
+      let requirements = '';
+      switch (country) {
+        case 'USA':
+          requirements = 'Required: EIN, LLC Articles, Business License, Proof of Address.';
+          break;
+        case 'UK':
+          requirements = 'Required: Companies House Registration, VAT Number, Proof of Address.';
+          break;
+        case 'India':
+          requirements = 'Required: GST Certificate, Udyam Registration, PAN Card, Proof of Address.';
+          break;
+        case 'Canada':
+          requirements = 'Required: Business Number, Provincial Business Registration, Proof of Address.';
+          break;
+        case 'Germany':
+          requirements = 'Required: Handelsregisterauszug, VAT ID, Proof of Address.';
+          break;
+        case 'Brazil':
+          requirements = 'Required: CNPJ, Business License, Proof of Address.';
+          break;
+        case 'Nigeria':
+          requirements = 'Required: CAC Registration, Taxpayer ID, Proof of Address.';
+          break;
+        case 'Australia':
+          requirements = 'Required: ABN, Business Registration, Proof of Address.';
+          break;
+        default:
+          requirements = '';
+      }
+      docReqDiv.textContent = requirements;
+    });
+  </script>
+</body>
+</html>
