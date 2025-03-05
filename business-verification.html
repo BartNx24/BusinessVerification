@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Identity Verification</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+    }
+    button {
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>User Identity Verification</h1>
+    <form id="verificationForm">
+      <input type="text" id="fullName" placeholder="Full Name" required />
+      <input type="email" id="email" placeholder="Email" required />
+      <button type="submit">Submit Verification</button>
+    </form>
+  </div>
+  <script>
+    document.getElementById('verificationForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const fullName = document.getElementById('fullName').value;
+      const email = document.getElementById('email').value;
+      
+      // Debug: show an alert that the form was submitted.
+      alert("Form submitted with: " + fullName + " / " + email);
+      console.log("Form submitted:", fullName, email);
+      
+      // Check if ReactNativeWebView exists.
+      if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+        const message = JSON.stringify({
+          event: "formSubmitted",
+          data: { fullName, email }
+        });
+        console.log("Sending message to React Native:", message);
+        window.ReactNativeWebView.postMessage(message);
+      } else {
+        console.error("window.ReactNativeWebView is not available.");
+        alert("Error: ReactNativeWebView not available.");
+      }
+    });
+  </script>
+</body>
+</html>
