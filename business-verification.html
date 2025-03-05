@@ -77,7 +77,6 @@
     <p>Please complete the following steps to verify your business globally.</p>
     
     <form id="verificationForm">
-      
       <!-- Section 1: Business Details -->
       <div class="section" id="business-details">
         <h2>Business Details</h2>
@@ -145,7 +144,102 @@
     </form>
   </div>
   
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <!-- Firebase Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <!-- Firebase Storage -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+
   <script>
+    // TODO: Replace with your Firebase project configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBs7pRnnJKpY39oQ-8TUaTSi_3ZgYfnt8s",
+      authDomain: "nexus-601bd.firebaseapp.com",
+      projectId: "nexus-601bd",
+      storageBucket: "nexus-601bd.appspot.com",
+      messagingSenderId: "873657897341",
+      appId: "1:873657897341:web:f071a476f9372e3b523c14",
+      measurementId: "G-Q3PNQ3NYYZ"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    // Function to upload a file to Firebase Storage and return the download URL
+    async function uploadFile(file, path) {
+      const storageRef = storage.ref();
+      const fileRef = storageRef.child(path);
+      await fileRef.put(file);
+      return fileRef.getDownloadURL();
+    }
+
+    // Handle form submission
+    document.getElementById('verificationForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Retrieve form values
+      const businessName = document.getElementById('businessName').value;
+      const country = document.getElementById('country').value;
+      const taxId = document.getElementById('taxId').value;
+      const ownerName = document.getElementById('ownerName').value;
+      const timestamp = Date.now();
+
+      // Retrieve file objects
+      const businessRegDocFile = document.getElementById('businessRegDoc').files[0];
+      const businessLicenseFile = document.getElementById('businessLicense').files[0];
+      const addressProofFile = document.getElementById('addressProof').files[0];
+      const ownerIDFile = document.getElementById('ownerID').files[0];
+      const selfieFile = document.getElementById('selfie').files[0];
+
+      try {
+        // Upload files and get download URLs
+        let businessRegDocURL = "";
+        let businessLicenseURL = "";
+        let addressProofURL = "";
+        let ownerIDURL = "";
+        let selfieURL = "";
+
+        if (businessRegDocFile) {
+          businessRegDocURL = await uploadFile(businessRegDocFile, `verifications/${timestamp}_businessRegDoc_${businessRegDocFile.name}`);
+        }
+        if (businessLicenseFile) {
+          businessLicenseURL = await uploadFile(businessLicenseFile, `verifications/${timestamp}_businessLicense_${businessLicenseFile.name}`);
+        }
+        if (addressProofFile) {
+          addressProofURL = await uploadFile(addressProofFile, `verifications/${timestamp}_addressProof_${addressProofFile.name}`);
+        }
+        if (ownerIDFile) {
+          ownerIDURL = await uploadFile(ownerIDFile, `verifications/${timestamp}_ownerID_${ownerIDFile.name}`);
+        }
+        if (selfieFile) {
+          selfieURL = await uploadFile(selfieFile, `verifications/${timestamp}_selfie_${selfieFile.name}`);
+        }
+
+        // Save the form data along with file URLs in Firestore
+        await db.collection('business_verifications').add({
+          businessName,
+          country,
+          taxId,
+          ownerName,
+          businessRegDocURL,
+          businessLicenseURL,
+          addressProofURL,
+          ownerIDURL,
+          selfieURL,
+          submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        alert('Verification submitted successfully!');
+        document.getElementById('verificationForm').reset();
+      } catch (error) {
+        console.error('Error uploading files or saving data:', error);
+        alert('There was an error submitting your verification. Please try again.');
+      }
+    });
+
     // Basic script to dynamically update document requirements based on country selection.
     const countrySelect = document.getElementById('country');
     const docReqDiv = document.getElementById('documentRequirements');
@@ -183,8 +277,6 @@
       }
       docReqDiv.textContent = requirements;
     });
-
-    // Additional JavaScript can be added for form validation and API integrations for automated KYC.
   </script>
 </body>
 </html>
