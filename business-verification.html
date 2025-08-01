@@ -252,31 +252,40 @@
       submitButton.textContent = "Uploading...";
 
       try {
-        // Ensure user is signed in
-        auth.onAuthStateChanged((user) => {
-          if (!user) {
-            auth.signInAnonymously()
-              .then(() => console.log('Signed in anonymously for verification'))
-              .catch(err => console.error('Anonymous sign-in failed', err));
-          }
-        });
+        // 1. Ensure user is signed in (inject or anonymous)
+        let user = auth.currentUser;
 
-        // Retrieve form values
+        if (!user) {
+          try {
+            // Try to sign in anonymously and wait for completion!
+            const anonResult = await auth.signInAnonymously();
+            user = anonResult.user;
+            console.log('Signed in anonymously for verification, UID:', user.uid);
+          } catch (anonErr) {
+            throw new Error('Anonymous sign-in failed: ' + anonErr.message);
+          }
+        }
+
+        if (!user) throw new Error("No user is signed in. Please wait or re-inject credentials.");
+
+        // 2. Collect form data
         const businessName = document.getElementById('businessName').value;
         const country = document.getElementById('country').value;
         const taxId = document.getElementById('taxId').value;
         const ownerName = document.getElementById('ownerName').value;
         const timestamp = Date.now();
-        const uid = currentUser.uid; // The signed-in user's UID
+        const uid = user.uid; // NOW this will always be valid!
 
-        // Retrieve file objects
+        // ... (file uploading code stays the same)
+
+        // 3. Retrieve file objects
         const businessRegDocFile = document.getElementById('businessRegDoc').files[0];
         const businessLicenseFile = document.getElementById('businessLicense').files[0];
         const addressProofFile = document.getElementById('addressProof').files[0];
         const ownerIDFile = document.getElementById('ownerID').files[0];
         const selfieFile = document.getElementById('selfie').files[0];
 
-        // Upload files and get download URLs
+        // 4. Upload files and get download URLs
         const businessRegDocURL = businessRegDocFile
           ? await uploadFile(businessRegDocFile, `verifications/${uid}/${timestamp}_businessRegDoc_${businessRegDocFile.name}`)
           : "";
@@ -293,7 +302,7 @@
           ? await uploadFile(selfieFile, `verifications/${uid}/${timestamp}_selfie_${selfieFile.name}`)
           : "";
 
-        // Save the form data along with file URLs in Firestore
+        // 5. Save the form data along with file URLs in Firestore
         await db.collection('business_verifications').add({
           ownerUid: uid,
           businessName,
@@ -308,11 +317,11 @@
           submittedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // Notify user and reset form
+        // 6. Notify user and reset form
         alert('Verification submitted successfully!');
         document.getElementById('verificationForm').reset();
 
-        // Let React Native know the form was submitted
+        // 7. Let React Native know the form was submitted
         if (window.ReactNativeWebView) {
           window.ReactNativeWebView.postMessage(JSON.stringify({ event: 'formSubmitted' }));
         }
@@ -323,6 +332,7 @@
         submitButton.textContent = "Submit Verification";
       }
     });
+
 
     // 5. Update document requirements dynamically based on country selection
     const countrySelect = document.getElementById('country');
