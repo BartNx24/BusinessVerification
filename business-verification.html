@@ -253,10 +253,13 @@
 
       try {
         // Ensure user is signed in
-        const currentUser = auth.currentUser;
-        if (!currentUser) {
-          throw new Error("No user is signed in. Please wait or re-inject credentials.");
-        }
+        auth.onAuthStateChanged((user) => {
+          if (!user) {
+            auth.signInAnonymously()
+              .then(() => console.log('Signed in anonymously for verification'))
+              .catch(err => console.error('Anonymous sign-in failed', err));
+          }
+        });
 
         // Retrieve form values
         const businessName = document.getElementById('businessName').value;
