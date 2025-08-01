@@ -186,24 +186,38 @@
     const db = firebase.firestore();
     const storage = firebase.storage();
 
-    // Listen for messages from React Native to get email/password
-    // and auto-sign in the user on this page
+    // 1. Fill email field if available on page load (covers reload and hot-injects)
+    document.addEventListener('DOMContentLoaded', function () {
+      // Fill email if set on window before DOM loaded
+      if (window.USER_EMAIL) {
+        var emailInput = document.getElementById('userEmail');
+        if (emailInput) {
+          emailInput.value = window.USER_EMAIL;
+        }
+      }
+    });
+
+    // 2. Listen for injected credentials from React Native WebView
     window.addEventListener("message", (event) => {
       try {
         const data = JSON.parse(event.data);
         if (data.event === "setUserCredentials") {
           window.USER_EMAIL = data.email;
           window.USER_PASSWORD = data.password;
-          document.getElementById("userEmail").value = data.email;
+          var emailInput = document.getElementById("userEmail");
+          if (emailInput) {
+            emailInput.value = data.email;
+          }
 
-          // Sign in with the injected credentials
+          // Sign in with the injected credentials (optional: can skip if not needed for verification)
           auth.signInWithEmailAndPassword(data.email, data.password)
             .then((userCredential) => {
               console.log("User signed in on the WebView page:", userCredential.user.uid);
             })
             .catch((err) => {
               console.error("Error signing in:", err);
-              alert("Could not sign in with the provided credentials.");
+              // Optionally show alert, but can be silent if not required for verification
+              // alert("Could not sign in with the provided credentials.");
             });
         }
       } catch (err) {
@@ -211,8 +225,7 @@
       }
     });
 
-    // Function to upload a file to Firebase Storage and return the download URL.
-    // Checks if the file exceeds 5MB and throws a specific error if so.
+    // 3. Function to upload a file to Firebase Storage and return the download URL.
     async function uploadFile(file, path) {
       const MAX_FILE_SIZE = 5242880; // 5MB in bytes
       if (file.size > MAX_FILE_SIZE) {
@@ -232,7 +245,7 @@
       }
     }
 
-    // Handle form submission
+    // 4. Handle form submission
     document.getElementById('verificationForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const submitButton = document.getElementById("submitButton");
@@ -308,7 +321,7 @@
       }
     });
 
-    // Update document requirements dynamically based on country selection
+    // 5. Update document requirements dynamically based on country selection
     const countrySelect = document.getElementById('country');
     const docReqDiv = document.getElementById('documentRequirements');
 
@@ -346,5 +359,6 @@
       docReqDiv.textContent = requirements;
     });
   </script>
+
 </body>
 </html>
