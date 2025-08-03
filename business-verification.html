@@ -186,19 +186,6 @@
   const db = firebase.firestore();
   const storage = firebase.storage();
 
-  // Listen for messages from React Native to get only the email (no password, no sign-in)
-  window.addEventListener("message", (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      if (data.event === "setUserEmail") {
-        window.USER_EMAIL = data.email;
-        document.getElementById("userEmail").value = data.email;
-      }
-    } catch (err) {
-      console.error("Error receiving credentials:", err);
-    }
-  });
-
   // Function to upload a file to Firebase Storage and return the download URL.
   // Checks if the file exceeds 5MB and throws a specific error if so.
   async function uploadFile(file, path) {
