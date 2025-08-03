@@ -182,9 +182,24 @@
     firebase.app();
   }
 
-  // You can skip firebase.auth(); if not used
+  const auth = firebase.auth();
   const db = firebase.firestore();
   const storage = firebase.storage();
+
+  // Sign in anonymously if not already signed in
+  let anonAuthPromise = null;
+  function ensureAnonymousAuth() {
+    if (auth.currentUser) return Promise.resolve(auth.currentUser);
+    if (!anonAuthPromise) {
+      anonAuthPromise = auth.signInAnonymously()
+        .then(() => auth.currentUser)
+        .catch((error) => {
+          alert('Could not authenticate for file upload: ' + error.message);
+          throw error;
+        });
+    }
+    return anonAuthPromise;
+  }
 
   // Function to upload a file to Firebase Storage and return the download URL.
   // Checks if the file exceeds 5MB and throws a specific error if so.
@@ -207,6 +222,11 @@
     }
   }
 
+  // On page load, ensure the user is authenticated anonymously
+  window.addEventListener('DOMContentLoaded', function() {
+    ensureAnonymousAuth();
+  });
+
   // Handle form submission
   document.getElementById('verificationForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -214,6 +234,10 @@
     submitButton.textContent = "Uploading...";
 
     try {
+      // Wait for authentication to complete
+      const user = await ensureAnonymousAuth();
+      if (!user) throw new Error("Could not authenticate for upload.");
+
       // Retrieve form values
       const businessName = document.getElementById('businessName').value;
       const country = document.getElementById('country').value;
@@ -221,7 +245,8 @@
       const ownerName = document.getElementById('ownerName').value;
       const userEmail = document.getElementById('userEmail').value;
       const timestamp = Date.now();
-      const verificationId = 'anon_' + timestamp;
+      const anonUid = user.uid; // Use this for Storage & Firestore path
+      const verificationId = `anon_${anonUid}_${timestamp}`;
 
       // Retrieve file objects
       const businessRegDocFile = document.getElementById('businessRegDoc').files[0];
@@ -232,24 +257,25 @@
 
       // Upload files and get download URLs
       const businessRegDocURL = businessRegDocFile
-        ? await uploadFile(businessRegDocFile, `verifications/${verificationId}/${timestamp}_businessRegDoc_${businessRegDocFile.name}`)
+        ? await uploadFile(businessRegDocFile, `verifications/${anonUid}/${timestamp}_businessRegDoc_${businessRegDocFile.name}`)
         : "";
       const businessLicenseURL = businessLicenseFile
-        ? await uploadFile(businessLicenseFile, `verifications/${verificationId}/${timestamp}_businessLicense_${businessLicenseFile.name}`)
+        ? await uploadFile(businessLicenseFile, `verifications/${anonUid}/${timestamp}_businessLicense_${businessLicenseFile.name}`)
         : "";
       const addressProofURL = addressProofFile
-        ? await uploadFile(addressProofFile, `verifications/${verificationId}/${timestamp}_addressProof_${addressProofFile.name}`)
+        ? await uploadFile(addressProofFile, `verifications/${anonUid}/${timestamp}_addressProof_${addressProofFile.name}`)
         : "";
       const ownerIDURL = ownerIDFile
-        ? await uploadFile(ownerIDFile, `verifications/${verificationId}/${timestamp}_ownerID_${ownerIDFile.name}`)
+        ? await uploadFile(ownerIDFile, `verifications/${anonUid}/${timestamp}_ownerID_${ownerIDFile.name}`)
         : "";
       const selfieURL = selfieFile
-        ? await uploadFile(selfieFile, `verifications/${verificationId}/${timestamp}_selfie_${selfieFile.name}`)
+        ? await uploadFile(selfieFile, `verifications/${anonUid}/${timestamp}_selfie_${selfieFile.name}`)
         : "";
 
       // Save the form data along with file URLs in Firestore
       await db.collection('business_verifications').add({
         verificationId,
+        anonUid,
         userEmail,
         businessName,
         country,
