@@ -5,40 +5,93 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Business Global Verification</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#f2f2f2; margin:0; padding:0; }
-    .container { max-width:800px; margin:2rem auto; background:#fff; padding:2rem; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1); }
-    h1,h2 { margin-top:0; color:#333; }
-    form { display:flex; flex-direction:column; }
-    .section { margin-bottom:2rem; }
-    label { display:block; margin-bottom:0.3rem; font-weight:bold; }
-    input[type="text"], select, input[type="file"] { width:100%; padding:0.5rem; margin-bottom:1rem; border:1px solid #ccc; border-radius:4px; }
-    .checkbox-group { display:flex; align-items:center; }
-    .checkbox-group input[type="checkbox"] { margin-right:0.5rem; }
-    button { padding:0.9rem; background:#007bff; color:#fff; border:none; border-radius:8px; font-size:1rem; cursor:pointer; }
-    button:hover { background:#0056b3; }
-    .muted { color:#666; font-size:0.9rem; }
-    .status { padding:0.75rem 1rem; border-radius:6px; margin-top:1rem; }
-    .status.processing { background:#fff8e1; border:1px solid #ffe082; }
-    .status.verified   { background:#e8f5e9; border:1px solid #a5d6a7; }
-    .status.rejected   { background:#ffebee; border:1px solid #ef9a9a; }
-    .small { font-size:.9rem }
-    @media (max-width: 600px) { .container { margin:1rem; padding:1rem; } }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      margin-top: 0;
+      color: #333;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+    .section {
+      margin-bottom: 2rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.3rem;
+      font-weight: bold;
+    }
+    input[type="text"],
+    select,
+    input[type="file"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+    }
+    .checkbox-group input[type="checkbox"] {
+      margin-right: 0.5rem;
+    }
+    button {
+      padding: 0.8rem;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    @media (max-width: 600px) {
+      .container {
+        margin: 1rem;
+        padding: 1rem;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Business Verification</h1>
     <p>Please complete the following steps to verify your business globally.</p>
-
-    <div id="statusCard" class="status processing" style="display:none;"></div>
-
+    
+    <!-- Add a hidden or read-only field for the user's email -->
     <form id="verificationForm">
+      <!-- Display user email if desired -->
       <div class="section">
         <label for="userEmail">Business Owner Email</label>
-        <input type="text" id="userEmail" name="userEmail" placeholder="Waiting for injected email..." readonly required />
-        <div class="muted small">You must be signed in. We’ll match your uploads to your account.</div>
+        <input
+          type="text"
+          id="userEmail"
+          name="userEmail"
+          placeholder="Waiting for injected email..."
+          readonly
+          required
+        />
       </div>
 
+      <!-- Section 1: Business Details -->
       <div class="section" id="business-details">
         <h2>Business Details</h2>
         <label for="businessName">Business Name</label>
@@ -56,38 +109,39 @@
           <option value="Nigeria">Nigeria</option>
           <option value="Australia">Australia</option>
         </select>
-        <div id="documentRequirements" class="muted"></div>
+        <div id="documentRequirements"></div>
       </div>
-
+      
+      <!-- Section 2: Document Upload -->
       <div class="section" id="document-upload">
         <h2>Upload Business Documents</h2>
-
         <label for="businessRegDoc">Business Registration Document</label>
-        <input type="file" id="businessRegDoc" name="businessRegDoc" accept="application/pdf,image/*" required />
+        <input type="file" id="businessRegDoc" name="businessRegDoc" required />
 
         <label for="taxId">Tax ID / EIN / VAT Number</label>
         <input type="text" id="taxId" name="taxId" placeholder="Enter your Tax ID" required />
 
         <label for="businessLicense">Business License (if applicable)</label>
-        <input type="file" id="businessLicense" name="businessLicense" accept="application/pdf,image/*" />
+        <input type="file" id="businessLicense" name="businessLicense" />
 
         <label for="addressProof">Proof of Address</label>
-        <input type="file" id="addressProof" name="addressProof" accept="application/pdf,image/*" required />
-        <div class="muted small">Max file size 5MB each. PDFs or images only.</div>
+        <input type="file" id="addressProof" name="addressProof" required />
       </div>
-
+      
+      <!-- Section 3: Owner Identity Verification -->
       <div class="section" id="owner-verification">
         <h2>Owner Identity Verification</h2>
         <label for="ownerName">Owner's Full Name</label>
         <input type="text" id="ownerName" name="ownerName" placeholder="Enter owner's name" required />
 
-        <label for="ownerID">Government ID (Passport, Driver’s License, etc.)</label>
-        <input type="file" id="ownerID" name="ownerID" accept="application/pdf,image/*" capture="environment" required />
+        <label for="ownerID">Upload Government-Issued ID (Passport, Driver’s License, etc.)</label>
+        <input type="file" id="ownerID" name="ownerID" required />
 
-        <label for="selfie">Selfie (for face matching)</label>
-        <input type="file" id="selfie" name="selfie" accept="image/*" capture="user" required />
+        <label for="selfie">Upload a Selfie for Face Matching</label>
+        <input type="file" id="selfie" name="selfie" required />
       </div>
-
+      
+      <!-- Section 4: Compliance and Consent -->
       <div class="section" id="compliance">
         <h2>Compliance</h2>
         <div class="checkbox-group">
@@ -95,22 +149,22 @@
           <label for="terms">I agree to the Terms &amp; Conditions and consent to data processing as per GDPR/CCPA and local laws.</label>
         </div>
       </div>
-
-      <!-- ONE button: uploads evidence then starts Veriff -->
-      <button id="verifyNowBtn" type="button">Upload & Start Identity Check</button>
-      <div class="muted small">This will upload your documents securely and immediately start the identity check.</div>
+      
+      <button id="submitButton" type="submit">Submit Verification</button>
     </form>
   </div>
-
-  <!-- Firebase SDKs -->
+  
+  <!-- Firebase App (the core Firebase SDK) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <!-- Firebase Auth -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <!-- Firebase Firestore -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <!-- Firebase Storage -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-functions-compat.js"></script>
 
   <script>
-  // ---- Firebase config ----
+  // Firebase configuration
   const firebaseConfig = {
     apiKey: "AIzaSyBs7pRnnJKpY39oQ-8TUaTSi_3ZgYfnt8s",
     authDomain: "nexus-601bd.firebaseapp.com",
@@ -120,210 +174,179 @@
     appId: "1:873657897341:web:f071a476f9372e3b523c14",
     measurementId: "G-Q3PNQ3NYYZ"
   };
-  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
-  const auth      = firebase.auth();
-  const db        = firebase.firestore();
-  const storage   = firebase.storage();
-  // ensure correct region for your callable
-  const functions = firebase.app().functions('europe-west1');
-
-  // ---------- RN/Host injection bridge ----------
-  const emailInput = document.getElementById('userEmail');
-
-  function applyInjected(obj) {
-    try {
-      if (!obj || typeof obj !== 'object') return;
-      if (obj.email) emailInput.value = obj.email;
-
-      // If a Firebase custom token is provided, sign in as that user
-      if (obj.customToken) {
-        auth.signInWithCustomToken(obj.customToken).catch(console.error);
-      }
-
-      // Optional handshake response
-      if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ event: 'kycFormAck' }));
-      }
-    } catch (e) { console.warn('inject error', e); }
+  // Initialize Firebase if not already initialized
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  } else {
+    firebase.app();
   }
 
-  // RN (and browser) postMessage handlers
-  window.addEventListener('message', (evt) => {
-    let data = evt?.data;
-    try { if (typeof data === 'string') data = JSON.parse(data); } catch {}
-    applyInjected(data);
-  });
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const storage = firebase.storage();
 
-  // Ask the container for user info when we load (RN can reply)
-  if (window.ReactNativeWebView) {
-    setTimeout(() => {
-      try {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ event: 'kycFormReady' }));
-      } catch {}
-    }, 0);
-  }
-
-  // ---------- Helpers: file checks ----------
-  async function getMagicHeader(file, n=8){
-    const buf = await file.slice(0,n).arrayBuffer();
-    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-  }
-  async function sha256(file){
-    const buf = await file.arrayBuffer();
-    const hash = await crypto.subtle.digest('SHA-256', buf);
-    return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
-  }
-  function assertMime(header){
-    const isPDF  = header.startsWith('25504446'); // %PDF
-    const isJPEG = header.startsWith('ffd8ff');   // JPEG
-    const isPNG  = header.startsWith('89504e47'); // PNG
-    const isRIFF = header.startsWith('52494646'); // WEBP container
-    if (!(isPDF || isJPEG || isPNG || isRIFF)) throw new Error('Unsupported or spoofed file type.');
-  }
-  async function preflightFile(file){
-    const MAX = 5 * 1024 * 1024;
-    if (!file) return { ok:false, reason:'Missing file' };
-    if (file.size > MAX) throw new Error(`File ${file.name} is too large. Max 5MB.`);
-    const header = await getMagicHeader(file);
-    assertMime(header);
-    const fingerprint = await sha256(file);
-    return { ok:true, header, fingerprint };
-  }
-
-  function requireSignedIn(){
-    const u = auth.currentUser;
-    if (!u) throw new Error('You must be signed in to submit verification.');
-    return u;
-  }
-
-  async function uploadFile(file, path) {
-    const { ok } = await preflightFile(file);
-    if (!ok) throw new Error('Invalid file.');
-    const fileRef = storage.ref().child(path);
-    await fileRef.put(file);
-    return await fileRef.getDownloadURL();
-  }
-
-  // ---------- UI/status ----------
-  const statusCard = document.getElementById('statusCard');
-  function setStatus(text, cls='processing'){
-    statusCard.style.display='block';
-    statusCard.className = `status ${cls}`;
-    statusCard.textContent = text;
-  }
-
-  // Country doc hints
-  const countrySelect = document.getElementById('country');
-  const docReqDiv = document.getElementById('documentRequirements');
-  countrySelect.addEventListener('change', function() {
-    const country = countrySelect.value;
-    const map = {
-      'USA':'Required: EIN, LLC Articles, Business License, Proof of Address.',
-      'UK':'Required: Companies House Registration, VAT Number, Proof of Address.',
-      'India':'Required: GST Certificate, Udyam Registration, PAN Card, Proof of Address.',
-      'Canada':'Required: Business Number, Provincial Business Registration, Proof of Address.',
-      'Germany':'Required: Handelsregisterauszug, VAT ID, Proof of Address.',
-      'Brazil':'Required: CNPJ, Business License, Proof of Address.',
-      'Nigeria':'Required: CAC Registration, Taxpayer ID, Proof of Address.',
-      'Australia':'Required: ABN, Business Registration, Proof of Address.'
-    };
-    docReqDiv.textContent = map[country] || '';
-  });
-
-  // Reflect existing status on load/sign-in
-  auth.onAuthStateChanged(async (user) => {
-    console.log('Auth state changed:', user?.uid || null);
-    if (user) {
-      if (!emailInput.value && user.email) emailInput.value = user.email;
-      const snap = await db.collection('verifications').doc(user.uid).get();
-      const v = snap.data();
-      if (v?.status) setStatus(
-        `Current status: ${v.status}`,
-        v.status === 'verified' ? 'verified' : v.status === 'rejected' ? 'rejected' : 'processing'
-      );
+  // Sign in anonymously if not already signed in
+  let anonAuthPromise = null;
+  function ensureAnonymousAuth() {
+    if (auth.currentUser) return Promise.resolve(auth.currentUser);
+    if (!anonAuthPromise) {
+      anonAuthPromise = auth.signInAnonymously()
+        .then(() => auth.currentUser)
+        .catch((error) => {
+          alert('Could not authenticate for file upload: ' + error.message);
+          throw error;
+        });
     }
+    return anonAuthPromise;
+  }
+
+  // Function to upload a file to Firebase Storage and return the download URL.
+  // Checks if the file exceeds 5MB and throws a specific error if so.
+  async function uploadFile(file, path) {
+    const MAX_FILE_SIZE = 5242880; // 5MB in bytes
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error(`File ${file.name} is too large. Maximum allowed size is 5MB.`);
+    }
+    try {
+      console.log(`Uploading file: ${file.name} to path: ${path}`);
+      const storageRef = storage.ref();
+      const fileRef = storageRef.child(path);
+      await fileRef.put(file);
+      const downloadURL = await fileRef.getDownloadURL();
+      console.log(`File uploaded successfully: ${downloadURL}`);
+      return downloadURL;
+    } catch (uploadError) {
+      console.error("File upload failed:", uploadError);
+      throw uploadError;
+    }
+  }
+
+  // On page load, ensure the user is authenticated anonymously
+  window.addEventListener('DOMContentLoaded', function() {
+    ensureAnonymousAuth();
   });
 
-  // ---------- One-click flow: upload then start Veriff ----------
-  const verifyNowBtn = document.getElementById('verifyNowBtn');
-  verifyNowBtn.addEventListener('click', uploadEvidenceThenStartKyc);
+  // Handle form submission
+  document.getElementById('verificationForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitButton = document.getElementById("submitButton");
+    submitButton.textContent = "Uploading...";
 
-  async function uploadEvidenceThenStartKyc() {
     try {
-      verifyNowBtn.disabled = true;
-      verifyNowBtn.textContent = 'Uploading evidence…';
+      // Wait for authentication to complete
+      const user = await ensureAnonymousAuth();
+      if (!user) throw new Error("Could not authenticate for upload.");
 
-      const user = requireSignedIn();
-      const uid = user.uid;
+      // Retrieve form values
+      const businessName = document.getElementById('businessName').value;
+      const country = document.getElementById('country').value;
+      const taxId = document.getElementById('taxId').value;
+      const ownerName = document.getElementById('ownerName').value;
+      const userEmail = document.getElementById('userEmail').value;
       const timestamp = Date.now();
+      const anonUid = user.uid; // Use this for Storage & Firestore path
+      const verificationId = `anon_${anonUid}_${timestamp}`;
 
-      // form data
-      const businessName = document.getElementById('businessName').value.trim();
-      const country      = document.getElementById('country').value;
-      const taxId        = document.getElementById('taxId').value.trim();
-      const ownerName    = document.getElementById('ownerName').value.trim();
-      const userEmail    = (emailInput.value || user.email || '').trim();
-
-      // files
+      // Retrieve file objects
       const businessRegDocFile = document.getElementById('businessRegDoc').files[0];
-      const businessLicenseFile= document.getElementById('businessLicense').files[0];
-      const addressProofFile   = document.getElementById('addressProof').files[0];
-      const ownerIDFile        = document.getElementById('ownerID').files[0];
-      const selfieFile         = document.getElementById('selfie').files[0];
+      const businessLicenseFile = document.getElementById('businessLicense').files[0];
+      const addressProofFile = document.getElementById('addressProof').files[0];
+      const ownerIDFile = document.getElementById('ownerID').files[0];
+      const selfieFile = document.getElementById('selfie').files[0];
 
-      // upload
-      const base = `verifications/${uid}/${timestamp}`;
-      const businessRegDocURL = businessRegDocFile ? await uploadFile(businessRegDocFile, `${base}_businessRegDoc_${businessRegDocFile.name}`) : '';
-      const businessLicenseURL= businessLicenseFile ? await uploadFile(businessLicenseFile, `${base}_businessLicense_${businessLicenseFile.name}`) : '';
-      const addressProofURL   = addressProofFile ? await uploadFile(addressProofFile, `${base}_addressProof_${addressProofFile.name}`) : '';
-      const ownerIDURL        = ownerIDFile ? await uploadFile(ownerIDFile, `${base}_ownerID_${ownerIDFile.name}`) : '';
-      const selfieURL         = selfieFile ? await uploadFile(selfieFile, `${base}_selfie_${selfieFile.name}`) : '';
+      // Upload files and get download URLs
+      const businessRegDocURL = businessRegDocFile
+        ? await uploadFile(businessRegDocFile, `verifications/${anonUid}/${timestamp}_businessRegDoc_${businessRegDocFile.name}`)
+        : "";
+      const businessLicenseURL = businessLicenseFile
+        ? await uploadFile(businessLicenseFile, `verifications/${anonUid}/${timestamp}_businessLicense_${businessLicenseFile.name}`)
+        : "";
+      const addressProofURL = addressProofFile
+        ? await uploadFile(addressProofFile, `verifications/${anonUid}/${timestamp}_addressProof_${addressProofFile.name}`)
+        : "";
+      const ownerIDURL = ownerIDFile
+        ? await uploadFile(ownerIDFile, `verifications/${anonUid}/${timestamp}_ownerID_${ownerIDFile.name}`)
+        : "";
+      const selfieURL = selfieFile
+        ? await uploadFile(selfieFile, `verifications/${anonUid}/${timestamp}_selfie_${selfieFile.name}`)
+        : "";
 
-      // canonical doc
-      await db.collection('verifications').doc(uid).set({
-        user: { uid, fullName: ownerName, email: userEmail },
-        form: { businessName, country, taxId },
-        evidence: {
-          businessRegDocURL, businessLicenseURL, addressProofURL,
-          ownerIDURL, selfieURL,
-          uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
-        },
-        status: 'processing'
-      }, { merge: true });
-
-      // optional legacy record
+      // Save the form data along with file URLs in Firestore
       await db.collection('business_verifications').add({
-        verificationId: `uid_${uid}_${timestamp}`,
-        uid, userEmail, businessName, country, taxId, ownerName,
-        businessRegDocURL, businessLicenseURL, addressProofURL, ownerIDURL, selfieURL,
+        verificationId,
+        anonUid,
+        userEmail,
+        businessName,
+        country,
+        taxId,
+        ownerName,
+        businessRegDocURL,
+        businessLicenseURL,
+        addressProofURL,
+        ownerIDURL,
+        selfieURL,
         submittedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      setStatus('Evidence uploaded. Starting identity check…', 'processing');
+      // Notify user and reset form
+      alert('Verification submitted successfully!');
+      document.getElementById('verificationForm').reset();
 
-      // Start Veriff session
-      verifyNowBtn.textContent = 'Starting identity check…';
-      const callable = functions.httpsCallable('createKycSession');
-      const resp = await callable({ fullName: ownerName, email: userEmail });
-      const startUrl = resp?.data?.startUrl;
-      if (!startUrl) throw new Error('Could not create identity session');
-
+      // Let React Native know the form was submitted
       if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ event: 'startKyc', url: startUrl }));
-      } else {
-        window.open(startUrl, '_blank');
+        window.ReactNativeWebView.postMessage(JSON.stringify({ event: 'formSubmitted' }));
       }
-
-      setStatus('Identity check started. We will update your status automatically when the check completes.', 'processing');
-    } catch (err) {
-      console.error(err);
-      alert(err.message || 'Could not complete verification');
+    } catch (error) {
+      console.error('Error uploading files or saving data:', error);
+      alert(`There was an error submitting your verification: ${error.message}`);
     } finally {
-      verifyNowBtn.textContent = 'Upload & Start Identity Check';
-      verifyNowBtn.disabled = false;
+      submitButton.textContent = "Submit Verification";
     }
-  }
-  </script>
+  });
+
+  // Update document requirements dynamically based on country selection
+  const countrySelect = document.getElementById('country');
+  const docReqDiv = document.getElementById('documentRequirements');
+
+  countrySelect.addEventListener('change', function() {
+    const country = countrySelect.value;
+    let requirements = '';
+    switch (country) {
+      case 'USA':
+        requirements = 'Required: EIN, LLC Articles, Business License, Proof of Address.';
+        break;
+      case 'UK':
+        requirements = 'Required: Companies House Registration, VAT Number, Proof of Address.';
+        break;
+      case 'India':
+        requirements = 'Required: GST Certificate, Udyam Registration, PAN Card, Proof of Address.';
+        break;
+      case 'Canada':
+        requirements = 'Required: Business Number, Provincial Business Registration, Proof of Address.';
+        break;
+      case 'Germany':
+        requirements = 'Required: Handelsregisterauszug, VAT ID, Proof of Address.';
+        break;
+      case 'Brazil':
+        requirements = 'Required: CNPJ, Business License, Proof of Address.';
+        break;
+      case 'Nigeria':
+        requirements = 'Required: CAC Registration, Taxpayer ID, Proof of Address.';
+        break;
+      case 'Australia':
+        requirements = 'Required: ABN, Business Registration, Proof of Address.';
+        break;
+      default:
+        requirements = '';
+    }
+    docReqDiv.textContent = requirements;
+  });
+  firebase.auth().onAuthStateChanged(user => {
+  console.log("Auth state changed:", user);
+});
+
+</script>
+
 </body>
 </html>
