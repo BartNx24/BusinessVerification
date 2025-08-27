@@ -125,11 +125,15 @@
   const auth      = firebase.auth();
   const db        = firebase.firestore();
   const storage   = firebase.storage();
-  // ensure correct region for your callable
   const functions = firebase.app().functions('europe-west1');
 
   // ---------- RN/Host injection bridge ----------
   const emailInput = document.getElementById('userEmail');
+
+  function postToRN(obj){
+    try { window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(obj)); }
+    catch(_) {}
+  }
 
   function applyInjected(obj) {
     try {
@@ -142,27 +146,22 @@
       }
 
       // Optional handshake response
-      if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ event: 'kycFormAck' }));
-      }
+      postToRN({ event: 'kycFormAck' });
     } catch (e) { console.warn('inject error', e); }
   }
 
   // RN (and browser) postMessage handlers
-  window.addEventListener('message', (evt) => {
+  function onIncomingMessage(evt) {
     let data = evt?.data;
     try { if (typeof data === 'string') data = JSON.parse(data); } catch {}
     applyInjected(data);
-  });
+  }
+  window.addEventListener('message', onIncomingMessage);
+  // Some RN versions dispatch on document instead of window:
+  document.addEventListener('message', onIncomingMessage);
 
   // Ask the container for user info when we load (RN can reply)
-  if (window.ReactNativeWebView) {
-    setTimeout(() => {
-      try {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ event: 'kycFormReady' }));
-      } catch {}
-    }, 0);
-  }
+  setTimeout(() => postToRN({ event: 'kycFormReady' }), 0);
 
   // ---------- Helpers: file checks ----------
   async function getMagicHeader(file, n=8){
@@ -231,18 +230,45 @@
     docReqDiv.textContent = map[country] || '';
   });
 
-  // Reflect existing status on load/sign-in
-  auth.onAuthStateChanged(async (user) => {
+  // ---------- Realtime verification status → tell RN ----------
+  let stopVerifListener = null;
+  let completeSent = false;
+
+  auth.onAuthStateChanged((user) => {
     console.log('Auth state changed:', user?.uid || null);
-    if (user) {
-      if (!emailInput.value && user.email) emailInput.value = user.email;
-      const snap = await db.collection('verifications').doc(user.uid).get();
-      const v = snap.data();
-      if (v?.status) setStatus(
-        `Current status: ${v.status}`,
-        v.status === 'verified' ? 'verified' : v.status === 'rejected' ? 'rejected' : 'processing'
-      );
+
+    // cleanup previous listener if any
+    if (stopVerifListener) { stopVerifListener(); stopVerifListener = null; }
+    completeSent = false;
+
+    if (!user) {
+      setStatus('Please sign in to continue.', 'processing');
+      return;
     }
+
+    if (!emailInput.value && user.email) emailInput.value = user.email;
+
+    const ref = db.collection('verifications').doc(user.uid);
+    stopVerifListener = ref.onSnapshot((snap) => {
+      const v = snap.data() || {};
+      const status = v.status || 'processing';
+
+      setStatus(
+        `Current status: ${status}`,
+        status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : 'processing'
+      );
+
+      // stream progress (optional)
+      postToRN({ event: 'kycStatus', status });
+
+      // final signal (only once)
+      if (!completeSent && (status === 'verified' || status === 'rejected')) {
+        completeSent = true;
+        postToRN({ event: 'kycComplete', status });
+      }
+    }, (err) => {
+      console.warn('status listener error', err);
+    });
   });
 
   // ---------- One-click flow: upload then start Veriff ----------
@@ -302,18 +328,16 @@
 
       setStatus('Evidence uploaded. Starting identity check…', 'processing');
 
-      // Start Veriff session
+      // Start Veriff session (Cloud Function writes veriff.sessionId/url and keeps status in Firestore)
       verifyNowBtn.textContent = 'Starting identity check…';
       const callable = functions.httpsCallable('createKycSession');
       const resp = await callable({ fullName: ownerName, email: userEmail });
       const startUrl = resp?.data?.startUrl;
+
       if (!startUrl) throw new Error('Could not create identity session');
 
-      if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ event: 'startKyc', url: startUrl }));
-      } else {
-        window.open(startUrl, '_blank');
-      }
+      // Tell RN to open the Veriff URL (overlay)
+      postToRN({ event: 'startKyc', url: startUrl });
 
       setStatus('Identity check started. We will update your status automatically when the check completes.', 'processing');
     } catch (err) {
