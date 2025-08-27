@@ -14,16 +14,13 @@
     input[type="text"], select, input[type="file"] { width:100%; padding:0.5rem; margin-bottom:1rem; border:1px solid #ccc; border-radius:4px; }
     .checkbox-group { display:flex; align-items:center; }
     .checkbox-group input[type="checkbox"] { margin-right:0.5rem; }
-    button { padding:0.8rem; background:#007bff; color:#fff; border:none; border-radius:4px; font-size:1rem; cursor:pointer; }
+    button { padding:0.9rem; background:#007bff; color:#fff; border:none; border-radius:8px; font-size:1rem; cursor:pointer; }
     button:hover { background:#0056b3; }
     .muted { color:#666; font-size:0.9rem; }
     .status { padding:0.75rem 1rem; border-radius:6px; margin-top:1rem; }
     .status.processing { background:#fff8e1; border:1px solid #ffe082; }
-    .status.verified { background:#e8f5e9; border:1px solid #a5d6a7; }
-    .status.rejected { background:#ffebee; border:1px solid #ef9a9a; }
-    .row { display:flex; gap:12px; align-items:center; }
-    .row > * { flex:1 }
-    .inline { display:inline-flex; align-items:center; gap:.5rem }
+    .status.verified   { background:#e8f5e9; border:1px solid #a5d6a7; }
+    .status.rejected   { background:#ffebee; border:1px solid #ef9a9a; }
     .small { font-size:.9rem }
     @media (max-width: 600px) { .container { margin:1rem; padding:1rem; } }
   </style>
@@ -99,11 +96,9 @@
         </div>
       </div>
 
-      <div class="row">
-        <button id="submitButton" type="submit">Upload Evidence</button>
-        <button id="startKycBtn" type="button" disabled>Start Identity Check</button>
-      </div>
-      <div class="muted small">Step 1 uploads your documents securely. Step 2 opens the identity check (selfie liveness + ID validation).</div>
+      <!-- ONE button: uploads evidence then starts Veriff -->
+      <button id="verifyNowBtn" type="button">Upload & Start Identity Check</button>
+      <div class="muted small">This will upload your documents securely and immediately start the identity check.</div>
     </form>
   </div>
 
@@ -113,9 +108,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-functions-compat.js"></script>
-  <!-- Optional: App Check (recommended). Replace with your site key and uncomment.
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-check-compat.js"></script>
-  -->
 
   <script>
   // ---- Firebase config ----
@@ -130,16 +122,49 @@
   };
   if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-  const storage = firebase.storage();
-  const functions = firebase.functions();
+  const auth      = firebase.auth();
+  const db        = firebase.firestore();
+  const storage   = firebase.storage();
+  // ensure correct region for your callable
+  const functions = firebase.app().functions('europe-west1');
 
-  // Optional: App Check (recommended)
-  // const appCheck = firebase.appCheck();
-  // appCheck.activate('YOUR_RECAPTCHA_V3_SITE_KEY', true);
+  // ---------- RN/Host injection bridge ----------
+  const emailInput = document.getElementById('userEmail');
 
-  // ---- Helpers: file checks ----
+  function applyInjected(obj) {
+    try {
+      if (!obj || typeof obj !== 'object') return;
+      if (obj.email) emailInput.value = obj.email;
+
+      // If a Firebase custom token is provided, sign in as that user
+      if (obj.customToken) {
+        auth.signInWithCustomToken(obj.customToken).catch(console.error);
+      }
+
+      // Optional handshake response
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ event: 'kycFormAck' }));
+      }
+    } catch (e) { console.warn('inject error', e); }
+  }
+
+  // RN (and browser) postMessage handlers
+  window.addEventListener('message', (evt) => {
+    let data = evt?.data;
+    try { if (typeof data === 'string') data = JSON.parse(data); } catch {}
+    applyInjected(data);
+  });
+
+  // Ask the container for user info when we load (RN can reply)
+  if (window.ReactNativeWebView) {
+    setTimeout(() => {
+      try {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ event: 'kycFormReady' }));
+      } catch {}
+    }, 0);
+  }
+
+  // ---------- Helpers: file checks ----------
   async function getMagicHeader(file, n=8){
     const buf = await file.slice(0,n).arrayBuffer();
     return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
@@ -150,11 +175,11 @@
     return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
   }
   function assertMime(header){
-    const isPDF = header.startsWith('25504446');       // %PDF
-    const isJPEG = header.startsWith('ffd8ff');        // JPEG
-    const isPNG = header.startsWith('89504e47');       // PNG
-    const isWEBP = header.startsWith('52494646');      // RIFF (check .webp by ext + RIFF type ideally)
-    if(!(isPDF || isJPEG || isPNG || isWEBP)) throw new Error('Unsupported or spoofed file type.');
+    const isPDF  = header.startsWith('25504446'); // %PDF
+    const isJPEG = header.startsWith('ffd8ff');   // JPEG
+    const isPNG  = header.startsWith('89504e47'); // PNG
+    const isRIFF = header.startsWith('52494646'); // WEBP container
+    if (!(isPDF || isJPEG || isPNG || isRIFF)) throw new Error('Unsupported or spoofed file type.');
   }
   async function preflightFile(file){
     const MAX = 5 * 1024 * 1024;
@@ -166,14 +191,12 @@
     return { ok:true, header, fingerprint };
   }
 
-  // ---- Require signed-in user (no anonymous uploads) ----
   function requireSignedIn(){
     const u = auth.currentUser;
     if (!u) throw new Error('You must be signed in to submit verification.');
     return u;
   }
 
-  // ---- Upload to Storage ----
   async function uploadFile(file, path) {
     const { ok } = await preflightFile(file);
     if (!ok) throw new Error('Invalid file.');
@@ -182,7 +205,7 @@
     return await fileRef.getDownloadURL();
   }
 
-  // ---- UI bits ----
+  // ---------- UI/status ----------
   const statusCard = document.getElementById('statusCard');
   function setStatus(text, cls='processing'){
     statusCard.style.display='block';
@@ -190,7 +213,7 @@
     statusCard.textContent = text;
   }
 
-  // ---- Document requirements text ----
+  // Country doc hints
   const countrySelect = document.getElementById('country');
   const docReqDiv = document.getElementById('documentRequirements');
   countrySelect.addEventListener('change', function() {
@@ -208,65 +231,68 @@
     docReqDiv.textContent = map[country] || '';
   });
 
-  // ---- Main flow ----
-  const form = document.getElementById('verificationForm');
-  const submitButton = document.getElementById('submitButton');
-  const startKycBtn = document.getElementById('startKycBtn');
-
-  // Let the RN app inject email or trigger sign-in; reflect auth state in UI
+  // Reflect existing status on load/sign-in
   auth.onAuthStateChanged(async (user) => {
     console.log('Auth state changed:', user?.uid || null);
     if (user) {
-      document.getElementById('userEmail').value = user.email || '';
-      // Populate status if doc exists
+      if (!emailInput.value && user.email) emailInput.value = user.email;
       const snap = await db.collection('verifications').doc(user.uid).get();
       const v = snap.data();
-      if (v?.status) setStatus(`Current status: ${v.status}`, v.status === 'verified' ? 'verified' : v.status === 'rejected' ? 'rejected' : 'processing');
+      if (v?.status) setStatus(
+        `Current status: ${v.status}`,
+        v.status === 'verified' ? 'verified' : v.status === 'rejected' ? 'rejected' : 'processing'
+      );
     }
   });
 
-  // Step 1: Upload evidence + create/merge verification doc
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+  // ---------- One-click flow: upload then start Veriff ----------
+  const verifyNowBtn = document.getElementById('verifyNowBtn');
+  verifyNowBtn.addEventListener('click', uploadEvidenceThenStartKyc);
+
+  async function uploadEvidenceThenStartKyc() {
     try {
-      submitButton.disabled = true;
-      startKycBtn.disabled = true;
-      submitButton.textContent = 'Uploading...';
+      verifyNowBtn.disabled = true;
+      verifyNowBtn.textContent = 'Uploading evidence…';
+
       const user = requireSignedIn();
       const uid = user.uid;
       const timestamp = Date.now();
 
       // form data
       const businessName = document.getElementById('businessName').value.trim();
-      const country = document.getElementById('country').value;
-      const taxId = document.getElementById('taxId').value.trim();
-      const ownerName = document.getElementById('ownerName').value.trim();
-      const userEmail = document.getElementById('userEmail').value.trim();
+      const country      = document.getElementById('country').value;
+      const taxId        = document.getElementById('taxId').value.trim();
+      const ownerName    = document.getElementById('ownerName').value.trim();
+      const userEmail    = (emailInput.value || user.email || '').trim();
 
       // files
       const businessRegDocFile = document.getElementById('businessRegDoc').files[0];
-      const businessLicenseFile = document.getElementById('businessLicense').files[0];
-      const addressProofFile = document.getElementById('addressProof').files[0];
-      const ownerIDFile = document.getElementById('ownerID').files[0];
-      const selfieFile = document.getElementById('selfie').files[0];
+      const businessLicenseFile= document.getElementById('businessLicense').files[0];
+      const addressProofFile   = document.getElementById('addressProof').files[0];
+      const ownerIDFile        = document.getElementById('ownerID').files[0];
+      const selfieFile         = document.getElementById('selfie').files[0];
 
       // upload
       const base = `verifications/${uid}/${timestamp}`;
       const businessRegDocURL = businessRegDocFile ? await uploadFile(businessRegDocFile, `${base}_businessRegDoc_${businessRegDocFile.name}`) : '';
-      const businessLicenseURL = businessLicenseFile ? await uploadFile(businessLicenseFile, `${base}_businessLicense_${businessLicenseFile.name}`) : '';
-      const addressProofURL = addressProofFile ? await uploadFile(addressProofFile, `${base}_addressProof_${addressProofFile.name}`) : '';
-      const ownerIDURL = ownerIDFile ? await uploadFile(ownerIDFile, `${base}_ownerID_${ownerIDFile.name}`) : '';
-      const selfieURL = selfieFile ? await uploadFile(selfieFile, `${base}_selfie_${selfieFile.name}`) : '';
+      const businessLicenseURL= businessLicenseFile ? await uploadFile(businessLicenseFile, `${base}_businessLicense_${businessLicenseFile.name}`) : '';
+      const addressProofURL   = addressProofFile ? await uploadFile(addressProofFile, `${base}_addressProof_${addressProofFile.name}`) : '';
+      const ownerIDURL        = ownerIDFile ? await uploadFile(ownerIDFile, `${base}_ownerID_${ownerIDFile.name}`) : '';
+      const selfieURL         = selfieFile ? await uploadFile(selfieFile, `${base}_selfie_${selfieFile.name}`) : '';
 
       // canonical doc
       await db.collection('verifications').doc(uid).set({
         user: { uid, fullName: ownerName, email: userEmail },
         form: { businessName, country, taxId },
-        evidence: { businessRegDocURL, businessLicenseURL, addressProofURL, ownerIDURL, selfieURL, uploadedAt: firebase.firestore.FieldValue.serverTimestamp() },
+        evidence: {
+          businessRegDocURL, businessLicenseURL, addressProofURL,
+          ownerIDURL, selfieURL,
+          uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+        },
         status: 'processing'
       }, { merge: true });
 
-      // legacy collection (keep for compatibility)
+      // optional legacy record
       await db.collection('business_verifications').add({
         verificationId: `uid_${uid}_${timestamp}`,
         uid, userEmail, businessName, country, taxId, ownerName,
@@ -274,35 +300,15 @@
         submittedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      setStatus('Evidence uploaded. Next: run the Identity Check.', 'processing');
-      alert('Evidence uploaded successfully.');
-      startKycBtn.disabled = false;
+      setStatus('Evidence uploaded. Starting identity check…', 'processing');
 
-      // Inform RN container (optional)
-      if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ event: 'evidenceUploaded' }));
-      }
-    } catch (err) {
-      console.error(err);
-      alert(err.message || 'Upload failed');
-    } finally {
-      submitButton.textContent = 'Upload Evidence';
-      submitButton.disabled = false;
-    }
-  });
-
-  // Step 2: Start Identity Verification (document + selfie liveness via vendor)
-  startKycBtn.addEventListener('click', async () => {
-    try {
-      startKycBtn.disabled = true;
-      startKycBtn.textContent = 'Starting...';
-      const user = requireSignedIn();
+      // Start Veriff session
+      verifyNowBtn.textContent = 'Starting identity check…';
       const callable = functions.httpsCallable('createKycSession');
-      const resp = await callable({ fullName: document.getElementById('ownerName').value, email: auth.currentUser?.email || '' });
+      const resp = await callable({ fullName: ownerName, email: userEmail });
       const startUrl = resp?.data?.startUrl;
       if (!startUrl) throw new Error('Could not create identity session');
 
-      // Open vendor flow
       if (window.ReactNativeWebView) {
         window.ReactNativeWebView.postMessage(JSON.stringify({ event: 'startKyc', url: startUrl }));
       } else {
@@ -312,12 +318,12 @@
       setStatus('Identity check started. We will update your status automatically when the check completes.', 'processing');
     } catch (err) {
       console.error(err);
-      alert(err.message || 'Could not start identity check');
+      alert(err.message || 'Could not complete verification');
     } finally {
-      startKycBtn.textContent = 'Start Identity Check';
-      startKycBtn.disabled = false;
+      verifyNowBtn.textContent = 'Upload & Start Identity Check';
+      verifyNowBtn.disabled = false;
     }
-  });
+  }
   </script>
 </body>
 </html>
