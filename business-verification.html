@@ -1,377 +1,898 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Business Global Verification</title>
-  <style>
-    body { font-family: Arial, sans-serif; background:#f2f2f2; margin:0; padding:0; }
-    .container { max-width:800px; margin:2rem auto; background:#fff; padding:2rem; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1); }
-    h1,h2 { margin-top:0; color:#333; }
-    form { display:flex; flex-direction:column; }
-    .section { margin-bottom:2rem; }
-    label { display:block; margin-bottom:0.3rem; font-weight:bold; }
-    input[type="text"], select, input[type="file"] { width:100%; padding:0.5rem; margin-bottom:1rem; border:1px solid #ccc; border-radius:4px; }
-    .checkbox-group { display:flex; align-items:center; }
-    .checkbox-group input[type="checkbox"] { margin-right:0.5rem; }
-    button { padding:0.9rem; background:#007bff; color:#fff; border:none; border-radius:8px; font-size:1rem; cursor:pointer; }
-    button:hover { background:#0056b3; }
-    .muted { color:#666; font-size:0.9rem; }
-    .status { padding:0.75rem 1rem; border-radius:6px; margin-top:1rem; }
-    .status.processing { background:#fff8e1; border:1px solid #ffe082; }
-    .status.verified   { background:#e8f5e9; border:1px solid #a5d6a7; }
-    .status.rejected   { background:#ffebee; border:1px solid #ef9a9a; }
-    .small { font-size:.9rem }
-    @media (max-width: 600px) { .container { margin:1rem; padding:1rem; } }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Business Verification</h1>
-    <p>Please complete the following steps to verify your business globally.</p>
-
-    <div id="statusCard" class="status processing" style="display:none;"></div>
-
-    <form id="verificationForm">
-      <div class="section">
-        <label for="userEmail">Business Owner Email</label>
-        <input type="text" id="userEmail" name="userEmail" placeholder="Waiting for injected email..." readonly required />
-        <div class="muted small">You must be signed in. We’ll match your uploads to your account.</div>
-      </div>
-
-      <div class="section" id="business-details">
-        <h2>Business Details</h2>
-        <label for="businessName">Business Name</label>
-        <input type="text" id="businessName" name="businessName" placeholder="Enter your business name" required />
-
-        <label for="country">Country</label>
-        <select id="country" name="country" required>
-          <option value="">Select your country</option>
-          <option value="USA">USA</option>
-          <option value="UK">UK</option>
-          <option value="India">India</option>
-          <option value="Canada">Canada</option>
-          <option value="Germany">Germany</option>
-          <option value="Brazil">Brazil</option>
-          <option value="Nigeria">Nigeria</option>
-          <option value="Australia">Australia</option>
-        </select>
-        <div id="documentRequirements" class="muted"></div>
-      </div>
-
-      <div class="section" id="document-upload">
-        <h2>Upload Business Documents</h2>
-
-        <label for="businessRegDoc">Business Registration Document</label>
-        <input type="file" id="businessRegDoc" name="businessRegDoc" accept="application/pdf,image/*" required />
-
-        <label for="taxId">Tax ID / EIN / VAT Number</label>
-        <input type="text" id="taxId" name="taxId" placeholder="Enter your Tax ID" required />
-
-        <label for="businessLicense">Business License (if applicable)</label>
-        <input type="file" id="businessLicense" name="businessLicense" accept="application/pdf,image/*" />
-
-        <label for="addressProof">Proof of Address</label>
-        <input type="file" id="addressProof" name="addressProof" accept="application/pdf,image/*" required />
-        <div class="muted small">Max file size 5MB each. PDFs or images only.</div>
-      </div>
-
-      <div class="section" id="owner-verification">
-        <h2>Owner Identity Verification</h2>
-        <label for="ownerName">Owner's Full Name</label>
-        <input type="text" id="ownerName" name="ownerName" placeholder="Enter owner's name" required />
-
-        <label for="ownerID">Government ID (Passport, Driver’s License, etc.)</label>
-        <input type="file" id="ownerID" name="ownerID" accept="application/pdf,image/*" capture="environment" required />
-
-        <label for="selfie">Selfie (for face matching)</label>
-        <input type="file" id="selfie" name="selfie" accept="image/*" capture="user" required />
-      </div>
-
-      <div class="section" id="compliance">
-        <h2>Compliance</h2>
-        <div class="checkbox-group">
-          <input type="checkbox" id="terms" name="terms" required />
-          <label for="terms">I agree to the Terms &amp; Conditions and consent to data processing as per GDPR/CCPA and local laws.</label>
-        </div>
-      </div>
-
-      <!-- ONE button: uploads evidence then starts Veriff -->
-      <button id="verifyNowBtn" type="button">Upload & Start Identity Check</button>
-      <div class="muted small">This will upload your documents securely and immediately start the identity check.</div>
-    </form>
-  </div>
-
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-functions-compat.js"></script>
-
-  <script>
-  // ---- Firebase config ----
-  const firebaseConfig = {
-    apiKey: "AIzaSyBs7pRnnJKpY39oQ-8TUaTSi_3ZgYfnt8s",
-    authDomain: "nexus-601bd.firebaseapp.com",
-    projectId: "nexus-601bd",
-    storageBucket: "nexus-601bd.appspot.com",
-    messagingSenderId: "873657897341",
-    appId: "1:873657897341:web:f071a476f9372e3b523c14",
-    measurementId: "G-Q3PNQ3NYYZ"
-  };
-  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-
-  const auth      = firebase.auth();
-  const db        = firebase.firestore();
-  const storage   = firebase.storage();
-  const functions = firebase.app().functions('europe-west1'); // callable region
-
-  // ---------- Small helpers ----------
-  const emailInput = document.getElementById('userEmail');
-  const statusCard = document.getElementById('statusCard');
-  let unsubVerification = null;
-  let __pollTimer = null;
-
-  function postToRN(payload){
-    try { window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(payload)); }
-    catch(_) {}
-  }
-
-  function setStatus(text, cls='processing'){
-    statusCard.style.display='block';
-    statusCard.className = `status ${cls}`;
-    statusCard.textContent = text;
-  }
-
-  // ---------- RN/Host injection bridge ----------
-  function applyInjected(obj) {
-    try {
-      if (!obj || typeof obj !== 'object') return;
-      if (obj.email) emailInput.value = obj.email;
-
-      // If a Firebase custom token is provided, sign in as that user
-      if (obj.customToken) {
-        auth.signInWithCustomToken(obj.customToken).catch(console.error);
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <meta
+      http-equiv="Permissions-Policy"
+      content="camera=(self), microphone=()"
+    />
+    <title>Kaarox Business Verification</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --blue: #0878ed;
+        --blue-dark: #075eb8;
+        --ink: #152033;
+        --muted: #5f6b7a;
+        --border: #d8dee8;
+        --soft: #f6f8fb;
+        --success: #176b3a;
+        --warning: #825500;
+        --danger: #a12727;
       }
-
-      // Optional handshake response
-      postToRN({ event: 'kycFormAck' });
-    } catch (e) { console.warn('inject error', e); }
-  }
-
-  // RN (and browser) postMessage handlers
-  window.addEventListener('message', (evt) => {
-    let data = evt?.data;
-    try { if (typeof data === 'string') data = JSON.parse(data); } catch {}
-    applyInjected(data);
-  });
-
-  // Ask the container for user info when we load (RN can reply)
-  if (window.ReactNativeWebView) {
-    setTimeout(() => { postToRN({ event: 'kycFormReady' }); }, 0);
-  }
-
-  // ---------- Helpers: file checks ----------
-  async function getMagicHeader(file, n=8){
-    const buf = await file.slice(0,n).arrayBuffer();
-    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-  }
-  async function sha256(file){
-    const buf = await file.arrayBuffer();
-    const hash = await crypto.subtle.digest('SHA-256', buf);
-    return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
-  }
-  function assertMime(header){
-    const isPDF  = header.startsWith('25504446'); // %PDF
-    const isJPEG = header.startsWith('ffd8ff');   // JPEG
-    const isPNG  = header.startsWith('89504e47'); // PNG
-    const isRIFF = header.startsWith('52494646'); // WEBP container
-    if (!(isPDF || isJPEG || isPNG || isRIFF)) throw new Error('Unsupported or spoofed file type.');
-  }
-  async function preflightFile(file){
-    const MAX = 5 * 1024 * 1024;
-    if (!file) return { ok:false, reason:'Missing file' };
-    if (file.size > MAX) throw new Error(`File ${file.name} is too large. Max 5MB.`);
-    const header = await getMagicHeader(file);
-    assertMime(header);
-    const fingerprint = await sha256(file);
-    return { ok:true, header, fingerprint };
-  }
-
-  function requireSignedIn(){
-    const u = auth.currentUser;
-    if (!u) throw new Error('You must be signed in to submit verification.');
-    return u;
-  }
-
-  async function uploadFile(file, path) {
-    const { ok } = await preflightFile(file);
-    if (!ok) throw new Error('Invalid file.');
-    const fileRef = storage.ref().child(path);
-    await fileRef.put(file);
-    return await fileRef.getDownloadURL();
-  }
-
-  // ---------- Country doc hints ----------
-  const countrySelect = document.getElementById('country');
-  const docReqDiv = document.getElementById('documentRequirements');
-  countrySelect.addEventListener('change', function() {
-    const country = countrySelect.value;
-    const map = {
-      'USA':'Required: EIN, LLC Articles, Business License, Proof of Address.',
-      'UK':'Required: Companies House Registration, VAT Number, Proof of Address.',
-      'India':'Required: GST Certificate, Udyam Registration, PAN Card, Proof of Address.',
-      'Canada':'Required: Business Number, Provincial Business Registration, Proof of Address.',
-      'Germany':'Required: Handelsregisterauszug, VAT ID, Proof of Address.',
-      'Brazil':'Required: CNPJ, Business License, Proof of Address.',
-      'Nigeria':'Required: CAC Registration, Taxpayer ID, Proof of Address.',
-      'Australia':'Required: ABN, Business Registration, Proof of Address.'
-    };
-    docReqDiv.textContent = map[country] || '';
-  });
-
-  // ---------- Real-time status reflection (auto-navigate hook) ----------
-  auth.onAuthStateChanged(async (user) => {
-    console.log('Auth state changed:', user?.uid || null);
-
-    if (unsubVerification) { try { unsubVerification(); } catch(_) {} unsubVerification = null; }
-
-    if (user) {
-      if (!emailInput.value && user.email) emailInput.value = user.email;
-
-      // Live listen to verifications/{uid}
-      unsubVerification = db.collection('verifications').doc(user.uid)
-        .onSnapshot((snap) => {
-          const v = snap.data() || {};
-          const st = String(v.status || 'processing').toLowerCase();
-
-          setStatus(
-            `Current status: ${st}`,
-            st === 'verified' ? 'verified' : st === 'rejected' ? 'rejected' : 'processing'
-          );
-
-          // Stream status + final outcome to RN container
-          postToRN({ event: 'kycStatus', status: st });
-          if (st === 'verified' || st === 'rejected') {
-            postToRN({ event: 'kycComplete', status: st });
-            // Stop any polling once we have a terminal state
-            if (__pollTimer) { clearInterval(__pollTimer); __pollTimer = null; }
-          }
-        }, (err) => {
-          console.warn('verification onSnapshot error', err);
-        });
-    } else {
-      setStatus('Please sign in to continue verification.', 'processing');
-    }
-  });
-
-  window.addEventListener('beforeunload', () => { if (unsubVerification) unsubVerification(); });
-
-  // ---------- Optional: light polling fallback in case webhook is delayed ----------
-  function startDecisionPolling() {
-    if (__pollTimer) return;
-    const pull = functions.httpsCallable('syncKycDecision'); // make this callable in your backend (optional)
-    __pollTimer = setInterval(async () => {
-      try { await pull(); } catch (_) { /* ignore */ }
-    }, 20000); // every 20s
-    // stop after 5 minutes
-    setTimeout(() => { if (__pollTimer) { clearInterval(__pollTimer); __pollTimer = null; } }, 5 * 60 * 1000);
-  }
-
-  // ---------- One-click flow: upload then start Veriff ----------
-  const verifyNowBtn = document.getElementById('verifyNowBtn');
-  verifyNowBtn.addEventListener('click', uploadEvidenceThenStartKyc);
-
-  async function uploadEvidenceThenStartKyc() {
-    try {
-      verifyNowBtn.disabled = true;
-      verifyNowBtn.textContent = 'Uploading evidence…';
-
-      const user = requireSignedIn();
-      const uid = user.uid;
-      const timestamp = Date.now();
-
-      // form data
-      const businessName = document.getElementById('businessName').value.trim();
-      const country      = document.getElementById('country').value;
-      const taxId        = document.getElementById('taxId').value.trim();
-      const ownerName    = document.getElementById('ownerName').value.trim();
-      const userEmail    = (emailInput.value || user.email || '').trim();
-
-      // files
-      const businessRegDocFile = document.getElementById('businessRegDoc').files[0];
-      const businessLicenseFile= document.getElementById('businessLicense').files[0];
-      const addressProofFile   = document.getElementById('addressProof').files[0];
-      const ownerIDFile        = document.getElementById('ownerID').files[0];
-      const selfieFile         = document.getElementById('selfie').files[0];
-
-      // upload
-      const base = `verifications/${uid}/${timestamp}`;
-      const businessRegDocURL = businessRegDocFile ? await uploadFile(businessRegDocFile, `${base}_businessRegDoc_${businessRegDocFile.name}`) : '';
-      const businessLicenseURL= businessLicenseFile ? await uploadFile(businessLicenseFile, `${base}_businessLicense_${businessLicenseFile.name}`) : '';
-      const addressProofURL   = addressProofFile ? await uploadFile(addressProofFile, `${base}_addressProof_${addressProofFile.name}`) : '';
-      const ownerIDURL        = ownerIDFile ? await uploadFile(ownerIDFile, `${base}_ownerID_${ownerIDFile.name}`) : '';
-      const selfieURL         = selfieFile ? await uploadFile(selfieFile, `${base}_selfie_${selfieFile.name}`) : '';
-
-      // canonical doc (ensure initial status exists)
-      await db.collection('verifications').doc(uid).set({
-        user: { uid, fullName: ownerName, email: userEmail },
-        form: { businessName, country, taxId },
-        evidence: {
-          businessRegDocURL, businessLicenseURL, addressProofURL,
-          ownerIDURL, selfieURL,
-          uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
-        },
-        status: 'processing'
-      }, { merge: true });
-
-      // optional legacy record
-      await db.collection('business_verifications').add({
-        verificationId: `uid_${uid}_${timestamp}`,
-        uid, userEmail, businessName, country, taxId, ownerName,
-        businessRegDocURL, businessLicenseURL, addressProofURL, ownerIDURL, selfieURL,
-        submittedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      setStatus('Evidence uploaded. Starting identity check…', 'processing');
-
-      // Start Veriff session
-      verifyNowBtn.textContent = 'Starting identity check…';
-      const callable = functions.httpsCallable('createKycSession');
-      const resp = await callable({ fullName: ownerName, email: userEmail });
-      const startUrl = resp?.data?.startUrl;
-      const sessionId = resp?.data?.sessionId;
-      if (!startUrl || !sessionId) throw new Error('Could not create identity session');
-
-      // Save sessionId on the same doc as an extra safeguard (backend also writes this)
-      await db.collection('verifications').doc(uid).set({
-        veriff: {
-          sessionId,
-          url: startUrl,
-          status: 'created',
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--soft);
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.45;
+      }
+      .container {
+        width: min(760px, 100%);
+        margin: 0 auto;
+        background: #fff;
+        min-height: 100vh;
+        padding: 24px 20px 48px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 26px;
+        line-height: 1.2;
+      }
+      h2 {
+        margin: 0 0 16px;
+        font-size: 18px;
+      }
+      p {
+        margin: 0 0 12px;
+      }
+      .intro {
+        color: var(--muted);
+      }
+      .notice,
+      .status {
+        margin: 18px 0;
+        padding: 14px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--soft);
+        font-size: 14px;
+      }
+      .notice strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+      .status {
+        display: none;
+      }
+      .status.processing {
+        display: block;
+        border-color: #f2d18a;
+        background: #fff9e8;
+        color: var(--warning);
+      }
+      .status.success {
+        display: block;
+        border-color: #9fd1b3;
+        background: #eef9f2;
+        color: var(--success);
+      }
+      .status.error {
+        display: block;
+        border-color: #e5aaaa;
+        background: #fff1f1;
+        color: var(--danger);
+      }
+      fieldset {
+        margin: 22px 0 0;
+        padding: 0;
+        border: 0;
+      }
+      label {
+        display: block;
+        margin: 14px 0 6px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 11px 12px;
+        background: #fff;
+        color: var(--ink);
+        font: inherit;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: 2px solid rgba(8, 120, 237, 0.18);
+        border-color: var(--blue);
+      }
+      input[readonly] {
+        background: var(--soft);
+        color: var(--muted);
+      }
+      textarea {
+        min-height: 86px;
+        resize: vertical;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .help {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .optional {
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .checkbox-row {
+        display: grid;
+        grid-template-columns: 22px 1fr;
+        gap: 9px;
+        align-items: start;
+        margin-top: 14px;
+      }
+      .checkbox-row input {
+        width: 18px;
+        height: 18px;
+        margin: 2px 0 0;
+      }
+      .checkbox-row label {
+        margin: 0;
+        font-weight: 500;
+      }
+      .link-button {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--blue-dark);
+        text-decoration: underline;
+        font: inherit;
+        cursor: pointer;
+      }
+      .primary {
+        width: 100%;
+        margin-top: 24px;
+        border: 0;
+        border-radius: 9px;
+        padding: 13px 18px;
+        background: var(--blue);
+        color: #fff;
+        font-size: 16px;
+        font-weight: 750;
+        cursor: pointer;
+      }
+      .primary:hover {
+        background: var(--blue-dark);
+      }
+      .primary:disabled {
+        opacity: 0.55;
+        cursor: wait;
+      }
+      .hidden {
+        display: none;
+      }
+      @media (max-width: 620px) {
+        .container {
+          padding: 20px 16px 40px;
         }
-      }, { merge: true });
-
-      if (window.ReactNativeWebView) {
-        postToRN({ event: 'startKyc', url: startUrl });
-      } else {
-        window.open(startUrl, '_blank');
+        .grid {
+          grid-template-columns: 1fr;
+          gap: 0;
+        }
       }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <h1>Business verification</h1>
+      <p class="intro">
+        Kaarox checks the representative's identity and the business licence
+        before displaying a verification badge.
+      </p>
 
-      // Start fallback polling in parallel (optional)
-      startDecisionPolling();
+      <div class="notice">
+        <strong>What the badge means</strong>
+        Kaarox checked the representative identity, business registration and
+        licence status on a stated date. It is not government approval and does
+        not guarantee service quality, financial standing or future conduct.
+      </div>
 
-      setStatus('Identity check started. We will update your status automatically when the check completes.', 'processing');
-    } catch (err) {
-      console.error(err);
-      alert(err.message || 'Could not complete verification');
-    } finally {
-      verifyNowBtn.textContent = 'Upload & Start Identity Check';
-      verifyNowBtn.disabled = false;
-    }
-  }
-  </script>
-</body>
+      <div
+        id="statusCard"
+        class="status"
+        role="status"
+        aria-live="polite"
+      ></div>
+
+      <form id="verificationForm" novalidate>
+        <fieldset>
+          <h2>Your Kaarox account</h2>
+          <label for="userEmail">Signed-in email</label>
+          <input
+            id="userEmail"
+            type="email"
+            readonly
+            required
+            autocomplete="email"
+          />
+          <div class="help">
+            Your password is never requested or sent to this page.
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <h2>UAE business licence</h2>
+
+          <label for="legalBusinessName">Legal business name</label>
+          <input
+            id="legalBusinessName"
+            type="text"
+            maxlength="160"
+            required
+            autocomplete="organization"
+          />
+
+          <label for="tradeName"
+            >Trading name <span class="optional">(if different)</span></label
+          >
+          <input
+            id="tradeName"
+            type="text"
+            maxlength="160"
+            autocomplete="organization"
+          />
+
+          <div class="grid">
+            <div>
+              <label for="country">Country</label>
+              <input
+                id="country"
+                type="text"
+                value="United Arab Emirates"
+                readonly
+                required
+              />
+            </div>
+            <div>
+              <label for="licenseNumber">Licence number</label>
+              <input
+                id="licenseNumber"
+                type="text"
+                maxlength="80"
+                required
+                autocomplete="off"
+              />
+            </div>
+          </div>
+
+          <div class="grid">
+            <div>
+              <label for="issuingAuthority">Issuing authority</label>
+              <select id="issuingAuthority" required>
+                <option value="">Select the authority</option>
+                <option value="Dubai DET">Dubai DET</option>
+                <option value="Abu Dhabi ADDED">Abu Dhabi ADDED</option>
+                <option value="Sharjah SEDD">Sharjah SEDD</option>
+                <option value="Ajman DED">Ajman DED</option>
+                <option value="Ras Al Khaimah DED">Ras Al Khaimah DED</option>
+                <option value="Fujairah DED">Fujairah DED</option>
+                <option value="Umm Al Quwain DED">Umm Al Quwain DED</option>
+                <option value="Free zone or other UAE authority">
+                  Free zone or other UAE authority
+                </option>
+              </select>
+            </div>
+            <div>
+              <label for="licenseExpiryDate">Licence expiry date</label>
+              <input id="licenseExpiryDate" type="date" required />
+            </div>
+          </div>
+
+          <div id="otherAuthorityWrap" class="hidden">
+            <label for="otherAuthority">Full authority or free-zone name</label>
+            <input id="otherAuthority" type="text" maxlength="160" />
+          </div>
+
+          <label for="licensedActivities">Licensed activities</label>
+          <textarea
+            id="licensedActivities"
+            maxlength="1000"
+            required
+          ></textarea>
+
+          <label for="taxId"
+            >VAT/TRN <span class="optional">(only if registered)</span></label
+          >
+          <input id="taxId" type="text" maxlength="40" autocomplete="off" />
+
+          <label for="businessWebsite"
+            >Business website <span class="optional">(optional)</span></label
+          >
+          <input
+            id="businessWebsite"
+            type="url"
+            maxlength="300"
+            placeholder="https://"
+            autocomplete="url"
+          />
+        </fieldset>
+
+        <fieldset>
+          <h2>Representative</h2>
+
+          <label for="representativeName">Full legal name</label>
+          <input
+            id="representativeName"
+            type="text"
+            maxlength="160"
+            required
+            autocomplete="name"
+          />
+
+          <label for="representativeRole"
+            >Your authority to represent the business</label
+          >
+          <select id="representativeRole" required>
+            <option value="">Select your role</option>
+            <option value="owner">Owner / shareholder</option>
+            <option value="director">Director</option>
+            <option value="manager_on_licence">
+              Manager named on the licence
+            </option>
+            <option value="authorized_representative">
+              Authorised representative
+            </option>
+          </select>
+        </fieldset>
+
+        <fieldset>
+          <h2>Business evidence</h2>
+
+          <label for="licenseDocument"
+            >Current trade licence or registration certificate</label
+          >
+          <input
+            id="licenseDocument"
+            type="file"
+            accept="application/pdf,image/jpeg,image/png,image/webp"
+            required
+          />
+          <div class="help">PDF, JPEG, PNG or WebP. Maximum 5 MB.</div>
+
+          <div id="authorityDocumentWrap" class="hidden">
+            <label for="authorityDocument"
+              >Proof that you are authorised to represent the business</label
+            >
+            <input
+              id="authorityDocument"
+              type="file"
+              accept="application/pdf,image/jpeg,image/png,image/webp"
+            />
+            <div class="help">
+              Required for an authorised representative. Do not upload an ID
+              here; Veriff handles identity documents separately.
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <h2>Confirmations and consent</h2>
+
+          <div class="checkbox-row">
+            <input id="authorityConfirmation" type="checkbox" required />
+            <label for="authorityConfirmation"
+              >I confirm that I am authorised to represent this business and
+              that the information and documents provided are accurate and
+              current.</label
+            >
+          </div>
+
+          <div class="checkbox-row">
+            <input id="biometricConsent" type="checkbox" required />
+            <label for="biometricConsent">
+              I consent to Veriff processing my identity document, facial image
+              and biometric comparison for representative identity verification,
+              and to Kaarox receiving the verification result.
+            </label>
+          </div>
+
+          <div class="checkbox-row">
+            <input id="privacyConfirmation" type="checkbox" required />
+            <label for="privacyConfirmation">
+              I have read the
+              <button id="privacyLink" class="link-button" type="button">
+                Business Verification Privacy Notice
+              </button>
+              and understand the stated sharing, cross-border processing,
+              retention and deletion arrangements.
+            </label>
+          </div>
+
+          <div class="checkbox-row">
+            <input id="termsConfirmation" type="checkbox" required />
+            <label for="termsConfirmation">
+              I agree to the
+              <button id="termsLink" class="link-button" type="button">
+                Kaarox Terms of Service</button
+              >.
+            </label>
+          </div>
+        </fieldset>
+
+        <button id="verifyButton" class="primary" type="submit">
+          Submit documents and start identity check
+        </button>
+      </form>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-functions-compat.js"></script>
+    <script>
+      (() => {
+        "use strict";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyBs7pRnnJKpY39oQ-8TUaTSi_3ZgYfnt8s",
+          authDomain: "nexus-601bd.firebaseapp.com",
+          projectId: "nexus-601bd",
+          storageBucket: "nexus-601bd.appspot.com",
+          messagingSenderId: "873657897341",
+          appId: "1:873657897341:web:f071a476f9372e3b523c14",
+          measurementId: "G-Q3PNQ3NYYZ",
+        };
+
+        const FUNCTIONS_REGION = "europe-west1";
+        const PRIVACY_URL =
+          "https://bartnx24.github.io/BusinessVerification/business-verification-privacy.html";
+        const TERMS_URL = "https://kaarox.com/terms";
+        const MAX_FILE_BYTES = 5 * 1024 * 1024;
+        const ALLOWED_CONTENT_TYPES = new Set([
+          "application/pdf",
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+        ]);
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        const functions = firebase.app().functions(FUNCTIONS_REGION);
+
+        const form = document.getElementById("verificationForm");
+        const emailInput = document.getElementById("userEmail");
+        const statusCard = document.getElementById("statusCard");
+        const verifyButton = document.getElementById("verifyButton");
+        const issuingAuthority = document.getElementById("issuingAuthority");
+        const otherAuthorityWrap =
+          document.getElementById("otherAuthorityWrap");
+        const otherAuthority = document.getElementById("otherAuthority");
+        const representativeRole =
+          document.getElementById("representativeRole");
+        const authorityDocumentWrap = document.getElementById(
+          "authorityDocumentWrap",
+        );
+        const authorityDocument = document.getElementById("authorityDocument");
+        const licenseExpiryDate = document.getElementById("licenseExpiryDate");
+
+        let unsubscribeVerification = null;
+        let decisionPollTimer = null;
+        let lastCustomToken = "";
+        let terminalEventSent = false;
+
+        const today = new Date();
+        today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+        licenseExpiryDate.min = today.toISOString().slice(0, 10);
+
+        function postToNative(payload) {
+          try {
+            if (window.ReactNativeWebView) {
+              window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+            }
+          } catch (_) {}
+        }
+
+        function setStatus(message, kind = "processing") {
+          statusCard.className = `status ${kind}`;
+          statusCard.textContent = message;
+        }
+
+        function openExternal(url) {
+          if (window.ReactNativeWebView) {
+            postToNative({ event: "openExternal", url });
+          } else {
+            window.open(url, "_blank", "noopener,noreferrer");
+          }
+        }
+
+        document
+          .getElementById("privacyLink")
+          .addEventListener("click", () => openExternal(PRIVACY_URL));
+        document
+          .getElementById("termsLink")
+          .addEventListener("click", () => openExternal(TERMS_URL));
+
+        issuingAuthority.addEventListener("change", () => {
+          const showOther =
+            issuingAuthority.value === "Free zone or other UAE authority";
+          otherAuthorityWrap.classList.toggle("hidden", !showOther);
+          otherAuthority.required = showOther;
+          if (!showOther) otherAuthority.value = "";
+        });
+
+        representativeRole.addEventListener("change", () => {
+          const needsAuthority =
+            representativeRole.value === "authorized_representative";
+          authorityDocumentWrap.classList.toggle("hidden", !needsAuthority);
+          authorityDocument.required = needsAuthority;
+          if (!needsAuthority) authorityDocument.value = "";
+        });
+
+        function requireSignedIn() {
+          if (!auth.currentUser) {
+            throw new Error(
+              "Your secure verification session expired. Return to Kaarox and try again.",
+            );
+          }
+          return auth.currentUser;
+        }
+
+        function randomVerificationId() {
+          if (crypto.randomUUID) return crypto.randomUUID().replaceAll("-", "");
+          const bytes = crypto.getRandomValues(new Uint8Array(24));
+          return Array.from(bytes, (value) =>
+            value.toString(16).padStart(2, "0"),
+          ).join("");
+        }
+
+        async function sha256(file) {
+          const bytes = await file.arrayBuffer();
+          const digest = await crypto.subtle.digest("SHA-256", bytes);
+          return Array.from(new Uint8Array(digest), (value) =>
+            value.toString(16).padStart(2, "0"),
+          ).join("");
+        }
+
+        async function inspectFile(file) {
+          if (!file) throw new Error("A required document is missing.");
+          if (file.size <= 0 || file.size > MAX_FILE_BYTES) {
+            throw new Error(
+              `${file.name || "Document"} must be smaller than 5 MB.`,
+            );
+          }
+
+          const header = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+          const hex = Array.from(header, (value) =>
+            value.toString(16).padStart(2, "0"),
+          ).join("");
+
+          let contentType = "";
+          let extension = "";
+          if (hex.startsWith("25504446")) {
+            contentType = "application/pdf";
+            extension = "pdf";
+          } else if (hex.startsWith("ffd8ff")) {
+            contentType = "image/jpeg";
+            extension = "jpg";
+          } else if (hex.startsWith("89504e470d0a1a0a")) {
+            contentType = "image/png";
+            extension = "png";
+          } else if (
+            hex.startsWith("52494646") &&
+            hex.slice(16, 24) === "57454250"
+          ) {
+            contentType = "image/webp";
+            extension = "webp";
+          }
+
+          if (!ALLOWED_CONTENT_TYPES.has(contentType)) {
+            throw new Error(
+              `${file.name || "Document"} is not a supported PDF or image.`,
+            );
+          }
+
+          return {
+            contentType,
+            extension,
+            size: file.size,
+            sha256: await sha256(file),
+          };
+        }
+
+        async function uploadEvidence(file, uid, verificationId, kind) {
+          const inspected = await inspectFile(file);
+          const path = `verification-submissions/${uid}/${verificationId}/${kind}.${inspected.extension}`;
+          const reference = storage.ref().child(path);
+          await reference.put(file, {
+            contentType: inspected.contentType,
+            customMetadata: {
+              sha256: inspected.sha256,
+              evidenceKind: kind,
+              verificationId,
+            },
+          });
+
+          return {
+            path,
+            contentType: inspected.contentType,
+            size: inspected.size,
+            sha256: inspected.sha256,
+          };
+        }
+
+        function resolvedIssuingAuthority() {
+          return issuingAuthority.value === "Free zone or other UAE authority"
+            ? otherAuthority.value.trim()
+            : issuingAuthority.value;
+        }
+
+        function readSubmissionData() {
+          return {
+            countryCode: "AE",
+            legalBusinessName: document
+              .getElementById("legalBusinessName")
+              .value.trim(),
+            tradeName: document.getElementById("tradeName").value.trim(),
+            licenseNumber: document
+              .getElementById("licenseNumber")
+              .value.trim(),
+            issuingAuthority: resolvedIssuingAuthority(),
+            licenseExpiryDate: licenseExpiryDate.value,
+            licensedActivities: document
+              .getElementById("licensedActivities")
+              .value.trim(),
+            taxId: document.getElementById("taxId").value.trim(),
+            businessWebsite: document
+              .getElementById("businessWebsite")
+              .value.trim(),
+            representativeName: document
+              .getElementById("representativeName")
+              .value.trim(),
+            representativeRole: representativeRole.value,
+            confirmations: {
+              authorityConfirmed: document.getElementById(
+                "authorityConfirmation",
+              ).checked,
+              biometricConsent:
+                document.getElementById("biometricConsent").checked,
+              privacyNoticeAccepted: document.getElementById(
+                "privacyConfirmation",
+              ).checked,
+              termsAccepted:
+                document.getElementById("termsConfirmation").checked,
+              noticeVersion: "2026-08-07",
+            },
+          };
+        }
+
+        async function startDecisionPolling() {
+          if (decisionPollTimer) return;
+          const syncDecision = functions.httpsCallable("syncKycDecision");
+          decisionPollTimer = setInterval(async () => {
+            try {
+              await syncDecision();
+            } catch (_) {}
+          }, 20000);
+          setTimeout(
+            () => {
+              clearInterval(decisionPollTimer);
+              decisionPollTimer = null;
+            },
+            5 * 60 * 1000,
+          );
+        }
+
+        function subscribeToVerification(uid) {
+          if (unsubscribeVerification) unsubscribeVerification();
+          unsubscribeVerification = db
+            .collection("verifications")
+            .doc(uid)
+            .onSnapshot(
+              (snapshot) => {
+                const verification = snapshot.data() || {};
+                const identityStatus = String(
+                  verification?.identity?.status || "",
+                ).toLowerCase();
+                const businessStatus = String(
+                  verification?.business?.status || "",
+                ).toLowerCase();
+                const overallStatus = String(
+                  verification?.status || "",
+                ).toLowerCase();
+
+                if (identityStatus === "rejected" && !terminalEventSent) {
+                  terminalEventSent = true;
+                  setStatus(
+                    "The representative identity check was not approved.",
+                    "error",
+                  );
+                  postToNative({ event: "identityRejected" });
+                  return;
+                }
+
+                if (
+                  identityStatus === "approved" &&
+                  ["pending_review", "approved"].includes(businessStatus)
+                ) {
+                  setStatus(
+                    overallStatus === "verified"
+                      ? "Business verification approved."
+                      : "Identity approved. The business licence is pending review.",
+                    "success",
+                  );
+                  if (!terminalEventSent) {
+                    terminalEventSent = true;
+                    postToNative({
+                      event: "verificationSubmitted",
+                      status: overallStatus || "pending_review",
+                    });
+                  }
+                  if (decisionPollTimer) {
+                    clearInterval(decisionPollTimer);
+                    decisionPollTimer = null;
+                  }
+                }
+              },
+              () =>
+                setStatus(
+                  "Waiting for the secure verification result…",
+                  "processing",
+                ),
+            );
+        }
+
+        auth.onAuthStateChanged((user) => {
+          if (!user) {
+            setStatus(
+              "Open this form from a signed-in Kaarox account.",
+              "error",
+            );
+            return;
+          }
+          emailInput.value = user.email || emailInput.value;
+          subscribeToVerification(user.uid);
+          setStatus("Secure session ready.", "success");
+        });
+
+        async function acceptHostAuthentication(event) {
+          let payload = event?.data;
+          try {
+            if (typeof payload === "string") payload = JSON.parse(payload);
+          } catch {
+            return;
+          }
+          if (!payload || payload.event !== "kaaroxVerificationAuth") return;
+          if (!payload.customToken || payload.customToken === lastCustomToken)
+            return;
+
+          lastCustomToken = payload.customToken;
+          emailInput.value = String(payload.email || "");
+          try {
+            await auth.signInWithCustomToken(payload.customToken);
+            postToNative({ event: "kycFormAuthenticated" });
+          } catch (error) {
+            lastCustomToken = "";
+            setStatus(
+              "The secure session could not be authenticated. Return to Kaarox and retry.",
+              "error",
+            );
+          }
+        }
+
+        window.addEventListener("message", acceptHostAuthentication);
+        document.addEventListener("message", acceptHostAuthentication);
+
+        form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          if (!form.reportValidity()) return;
+
+          try {
+            verifyButton.disabled = true;
+            terminalEventSent = false;
+            const user = requireSignedIn();
+            const submission = readSubmissionData();
+            const verificationId = randomVerificationId();
+
+            if (!submission.confirmations.biometricConsent) {
+              throw new Error("Identity verification consent is required.");
+            }
+
+            setStatus("Securely uploading business evidence…", "processing");
+            const licenseFile =
+              document.getElementById("licenseDocument").files[0];
+            const authorityFile = authorityDocument.files[0];
+            const licenseEvidence = await uploadEvidence(
+              licenseFile,
+              user.uid,
+              verificationId,
+              "business-licence",
+            );
+            const authorityEvidence = authorityFile
+              ? await uploadEvidence(
+                  authorityFile,
+                  user.uid,
+                  verificationId,
+                  "representative-authority",
+                )
+              : null;
+
+            setStatus("Registering the verification request…", "processing");
+            const submitVerification = functions.httpsCallable(
+              "submitBusinessVerification",
+            );
+            await submitVerification({
+              verificationId,
+              business: submission,
+              evidence: {
+                licenseDocument: licenseEvidence,
+                authorityDocument: authorityEvidence,
+              },
+            });
+
+            setStatus(
+              "Starting the representative identity check…",
+              "processing",
+            );
+            const createKycSession =
+              functions.httpsCallable("createKycSession");
+            const response = await createKycSession({
+              verificationId,
+              fullName: submission.representativeName,
+              email: user.email || emailInput.value,
+            });
+            const startUrl = String(response?.data?.startUrl || "");
+            const sessionId = String(response?.data?.sessionId || "");
+            if (!startUrl || !sessionId) {
+              throw new Error(
+                "The identity-check session could not be created.",
+              );
+            }
+
+            postToNative({ event: "startKyc", url: startUrl });
+            startDecisionPolling();
+            setStatus(
+              "Identity check started. Your business badge remains inactive until both identity and licence checks are approved.",
+              "processing",
+            );
+          } catch (error) {
+            console.error("Business verification submission failed:", error);
+            setStatus(
+              error?.message || "Verification could not be submitted.",
+              "error",
+            );
+          } finally {
+            verifyButton.disabled = false;
+          }
+        });
+
+        window.addEventListener("beforeunload", () => {
+          if (unsubscribeVerification) unsubscribeVerification();
+          if (decisionPollTimer) clearInterval(decisionPollTimer);
+        });
+
+        setTimeout(() => postToNative({ event: "kycFormReady" }), 0);
+      })();
+    </script>
+  </body>
 </html>
