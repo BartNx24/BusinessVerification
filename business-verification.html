@@ -2,202 +2,901 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
     <meta name="referrer" content="no-referrer" />
-    <title>Kaarox Business Verification Privacy Notice</title>
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <meta
+      http-equiv="Permissions-Policy"
+      content="camera=(self), microphone=()"
+    />
+    <title>Kaarox Business Verification</title>
     <style>
+      :root {
+        color-scheme: light;
+        --blue: #0878ed;
+        --blue-dark: #075eb8;
+        --ink: #152033;
+        --muted: #5f6b7a;
+        --border: #d8dee8;
+        --soft: #f6f8fb;
+        --success: #176b3a;
+        --warning: #825500;
+        --danger: #a12727;
+      }
+      * {
+        box-sizing: border-box;
+      }
       body {
         margin: 0;
-        background: #f6f8fb;
-        color: #172033;
-        font:
-          16px/1.6 -apple-system,
-          BlinkMacSystemFont,
-          "Segoe UI",
-          sans-serif;
+        background: var(--soft);
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.45;
       }
-      main {
+      .container {
         width: min(760px, 100%);
-        min-height: 100vh;
         margin: 0 auto;
-        padding: 28px 20px 56px;
         background: #fff;
+        min-height: 100vh;
+        padding: 24px 20px 48px;
       }
       h1 {
-        margin: 0 0 6px;
-        font-size: 28px;
+        margin: 0 0 8px;
+        font-size: 26px;
         line-height: 1.2;
       }
       h2 {
-        margin: 28px 0 8px;
-        font-size: 20px;
+        margin: 0 0 16px;
+        font-size: 18px;
       }
-      p,
-      li {
-        color: #3d4959;
+      p {
+        margin: 0 0 12px;
       }
-      .meta {
-        color: #667386;
+      .intro {
+        color: var(--muted);
+      }
+      .notice,
+      .status {
+        margin: 18px 0;
+        padding: 14px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--soft);
         font-size: 14px;
       }
-      .notice {
-        padding: 14px;
-        border: 1px solid #d7dee8;
-        border-radius: 10px;
-        background: #f7f9fc;
+      .notice strong {
+        display: block;
+        margin-bottom: 4px;
       }
-      a {
-        color: #075eb8;
+      .status {
+        display: none;
+      }
+      .status.processing {
+        display: block;
+        border-color: #f2d18a;
+        background: #fff9e8;
+        color: var(--warning);
+      }
+      .status.success {
+        display: block;
+        border-color: #9fd1b3;
+        background: #eef9f2;
+        color: var(--success);
+      }
+      .status.error {
+        display: block;
+        border-color: #e5aaaa;
+        background: #fff1f1;
+        color: var(--danger);
+      }
+      fieldset {
+        margin: 22px 0 0;
+        padding: 0;
+        border: 0;
+      }
+      label {
+        display: block;
+        margin: 14px 0 6px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 11px 12px;
+        background: #fff;
+        color: var(--ink);
+        font: inherit;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: 2px solid rgba(8, 120, 237, 0.18);
+        border-color: var(--blue);
+      }
+      input[readonly] {
+        background: var(--soft);
+        color: var(--muted);
+      }
+      textarea {
+        min-height: 86px;
+        resize: vertical;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .help {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .optional {
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .checkbox-row {
+        display: grid;
+        grid-template-columns: 22px 1fr;
+        gap: 9px;
+        align-items: start;
+        margin-top: 14px;
+      }
+      .checkbox-row input {
+        width: 18px;
+        height: 18px;
+        margin: 2px 0 0;
+      }
+      .checkbox-row label {
+        margin: 0;
+        font-weight: 500;
+      }
+      .link-button {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--blue-dark);
+        text-decoration: underline;
+        font: inherit;
+        cursor: pointer;
+      }
+      .primary {
+        width: 100%;
+        margin-top: 24px;
+        border: 0;
+        border-radius: 9px;
+        padding: 13px 18px;
+        background: var(--blue);
+        color: #fff;
+        font-size: 16px;
+        font-weight: 750;
+        cursor: pointer;
+      }
+      .primary:hover {
+        background: var(--blue-dark);
+      }
+      .primary:disabled {
+        opacity: 0.55;
+        cursor: wait;
+      }
+      .hidden {
+        display: none;
+      }
+      @media (max-width: 620px) {
+        .container {
+          padding: 20px 16px 40px;
+        }
+        .grid {
+          grid-template-columns: 1fr;
+          gap: 0;
+        }
       }
     </style>
   </head>
   <body>
-    <main>
-      <h1>Business Verification Privacy Notice</h1>
-      <p class="meta">Version 1.1 · Effective 7 August 2026</p>
-
-      <p class="notice">
-        This notice applies specifically to Kaarox business verification and
-        supplements the Kaarox Privacy Policy. Business verification is optional
-        unless Kaarox identifies a safety or legal reason that requires it. An
-        account that does not complete verification will not receive a
-        business-verification badge.
+    <main class="container">
+      <h1>Business verification</h1>
+      <p class="intro">
+        Kaarox checks the representative's identity and the business's official
+        registration or licence before displaying a verification badge.
       </p>
 
-      <h2>1. Who is responsible</h2>
-      <p>
-        Kaarox is responsible for the business-verification information it
-        controls. Questions and privacy-rights requests may be sent to
-        <a href="mailto:support@kaarox.com">support@kaarox.com</a>.
-      </p>
+      <div class="notice">
+        <strong>What the badge means</strong>
+        Kaarox checked the representative identity and the business registration
+        against an official registry or issuing authority on a stated date. It
+        is not government approval and does not guarantee service quality,
+        financial standing or future conduct.
+      </div>
 
-      <h2>2. Information Kaarox collects</h2>
-      <ul>
-        <li>Kaarox account identifier and signed-in email.</li>
-        <li>
-          Country, legal business name, trading name, registration or licence
-          number, issuing authority, any applicable expiry date, registered
-          activities, optional tax/VAT identifier and website.
-        </li>
-        <li>
-          The representative's name, stated role and confirmation of authority.
-        </li>
-        <li>
-          A current business licence or registration document and, when
-          required, evidence of the representative's authority.
-        </li>
-        <li>
-          Verification decisions, registry-check references, dates, audit
-          records, appeals and fraud-prevention signals.
-        </li>
-      </ul>
+      <div
+        id="statusCard"
+        class="status"
+        role="status"
+        aria-live="polite"
+      ></div>
 
-      <h2>3. Identity and biometric processing by Veriff</h2>
-      <p>
-        Veriff conducts the representative identity check. Depending on the
-        configured verification flow, Veriff may collect an identity document,
-        facial image, video or liveness information and may perform biometric
-        facial comparison and fraud checks. Kaarox receives the
-        identity-verification result, session reference and limited supporting
-        information needed to administer the verification.
-      </p>
-      <p>
-        The Kaarox business-evidence form does not separately upload the
-        representative's identity document or selfie to Kaarox storage. Veriff's
-        own privacy information and the Kaarox–Veriff agreement govern Veriff's
-        retention and processing of information handled within Veriff's service.
-      </p>
+      <form id="verificationForm" novalidate>
+        <fieldset>
+          <h2>Your Kaarox account</h2>
+          <label for="userEmail">Signed-in email</label>
+          <input
+            id="userEmail"
+            type="email"
+            readonly
+            required
+            autocomplete="email"
+          />
+          <div class="help">
+            Your password is never requested or sent to this page.
+          </div>
+        </fieldset>
 
-      <h2>4. Purposes</h2>
-      <ul>
-        <li>Confirm that the representative is a real person.</li>
-        <li>
-          Check that the business registration or licence is active and matches
-          the business profile.
-        </li>
-        <li>
-          Confirm that the representative is authorised to act for the business.
-        </li>
-        <li>
-          Issue, refuse, suspend, expire or revoke the verification badge.
-        </li>
-        <li>
-          Prevent impersonation, forged documents, fraud and misuse of Kaarox.
-        </li>
-        <li>
-          Handle appeals, reports, security incidents and legal obligations.
-        </li>
-      </ul>
+        <fieldset>
+          <h2>Business registration</h2>
 
-      <h2>5. Who receives the information</h2>
-      <p>
-        Information may be processed by Kaarox personnel or authorised
-        reviewers, Veriff, Kaarox's cloud and security providers, professional
-        advisers, and official business registries or issuing authorities in
-        the selected country when needed to verify the submitted registration.
-        Information may also be disclosed to competent authorities when
-        required by law. Access is limited according to role. Raw evidence is
-        not displayed publicly.
-      </p>
+          <label for="legalBusinessName">Legal business name</label>
+          <input
+            id="legalBusinessName"
+            type="text"
+            maxlength="160"
+            required
+            autocomplete="organization"
+          />
 
-      <h2>6. International processing</h2>
-      <p>
-        Kaarox's service providers, reviewers and the relevant official
-        registry may process information outside the user's country and outside
-        the United Arab Emirates. Kaarox will use applicable contractual,
-        security and organisational safeguards for such processing and will
-        document relevant provider locations and subprocessors.
-      </p>
+          <label for="tradeName"
+            >Trading name <span class="optional">(if different)</span></label
+          >
+          <input
+            id="tradeName"
+            type="text"
+            maxlength="160"
+            autocomplete="organization"
+          />
 
-      <h2>7. Retention</h2>
-      <p>
-        Business documents and authority evidence are scheduled for deletion 90
-        days after the final verification decision or completion of an appeal,
-        whichever is later, unless longer retention is required for an active
-        investigation or by law. Verification outcomes and limited audit records
-        may be retained for the life of the badge and for up to 24 months
-        afterward for fraud prevention, disputes and audit purposes.
-      </p>
-      <p>
-        Veriff's retention must be configured separately under the Kaarox–Veriff
-        service settings and agreement. Kaarox should select the shortest
-        retention compatible with verification, fraud prevention and legal
-        requirements.
-      </p>
+          <div class="grid">
+            <div>
+              <label for="country">Country</label>
+              <select id="countryCode" required>
+                <option value="">Select the country</option>
+              </select>
+            </div>
+            <div>
+              <label for="licenseNumber">Registration or licence number</label>
+              <input
+                id="licenseNumber"
+                type="text"
+                maxlength="80"
+                required
+                autocomplete="off"
+              />
+            </div>
+          </div>
 
-      <h2>8. Security</h2>
-      <p>
-        Kaarox uses restricted access, encryption in transit, backend-only
-        approval, audit records and access logging. Uploaded business evidence
-        is stored under non-public paths and is made available to authorised
-        reviewers only through short-lived access links.
-      </p>
+          <div class="grid">
+            <div>
+              <label for="issuingAuthority">Issuing authority</label>
+              <input
+                id="issuingAuthority"
+                type="text"
+                maxlength="160"
+                placeholder="Official registry or issuing authority"
+                required
+              />
+            </div>
+            <div>
+              <label for="licenseExpiryDate"
+                >Expiry date <span class="optional">(if applicable)</span></label
+              >
+              <input id="licenseExpiryDate" type="date" />
+            </div>
+          </div>
 
-      <h2>9. Your choices and rights</h2>
-      <p>
-        You may request access, correction or deletion of eligible information,
-        restrict or object to eligible processing, withdraw consent where
-        consent is relied upon, or challenge an automated result and request
-        human review. Withdrawal during verification will stop the verification
-        and no badge will be issued. Some information may be retained when
-        required for legal claims, security or compliance.
-      </p>
+          <label for="licensedActivities">Registered business activities</label>
+          <textarea
+            id="licensedActivities"
+            maxlength="1000"
+            required
+          ></textarea>
 
-      <h2>10. What the badge does not mean</h2>
-      <p>
-        The badge means that Kaarox completed the checks described on the badge
-        details as of a stated date. It is not government certification, a
-        recommendation, or a guarantee of service quality, financial standing,
-        regulatory compliance or future conduct.
-      </p>
+          <label for="taxId"
+            >Tax or VAT identifier
+            <span class="optional">(if registered)</span></label
+          >
+          <input id="taxId" type="text" maxlength="40" autocomplete="off" />
 
-      <h2>11. Changes</h2>
-      <p>
-        Kaarox may update this notice when the verification process, service
-        providers or applicable requirements change. A new version date will be
-        shown, and new consent will be requested when a material change requires
-        it.
-      </p>
+          <label for="businessWebsite"
+            >Business website <span class="optional">(optional)</span></label
+          >
+          <input
+            id="businessWebsite"
+            type="url"
+            maxlength="300"
+            placeholder="https://"
+            autocomplete="url"
+          />
+        </fieldset>
+
+        <fieldset>
+          <h2>Representative</h2>
+
+          <label for="representativeName">Full legal name</label>
+          <input
+            id="representativeName"
+            type="text"
+            maxlength="160"
+            required
+            autocomplete="name"
+          />
+
+          <label for="representativeRole"
+            >Your authority to represent the business</label
+          >
+          <select id="representativeRole" required>
+            <option value="">Select your role</option>
+            <option value="owner">Owner / shareholder</option>
+            <option value="director">Director</option>
+            <option value="manager_on_licence">
+              Manager named on the registration or licence
+            </option>
+            <option value="authorized_representative">
+              Authorised representative
+            </option>
+          </select>
+        </fieldset>
+
+        <fieldset>
+          <h2>Business evidence</h2>
+
+          <label for="licenseDocument"
+            >Current registration certificate, trade licence or equivalent</label
+          >
+          <input
+            id="licenseDocument"
+            type="file"
+            accept="application/pdf,image/jpeg,image/png,image/webp"
+            required
+          />
+          <div class="help">PDF, JPEG, PNG or WebP. Maximum 5 MB.</div>
+
+          <div id="authorityDocumentWrap" class="hidden">
+            <label for="authorityDocument"
+              >Proof that you are authorised to represent the business</label
+            >
+            <input
+              id="authorityDocument"
+              type="file"
+              accept="application/pdf,image/jpeg,image/png,image/webp"
+            />
+            <div class="help">
+              Required for an authorised representative. Do not upload an ID
+              here; Veriff handles identity documents separately.
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <h2>Confirmations and consent</h2>
+
+          <div class="checkbox-row">
+            <input id="authorityConfirmation" type="checkbox" required />
+            <label for="authorityConfirmation"
+              >I confirm that I am authorised to represent this business and
+              that the information and documents provided are accurate and
+              current.</label
+            >
+          </div>
+
+          <div class="checkbox-row">
+            <input id="biometricConsent" type="checkbox" required />
+            <label for="biometricConsent">
+              I consent to Veriff processing my identity document, facial image
+              and biometric comparison for representative identity verification,
+              and to Kaarox receiving the verification result.
+            </label>
+          </div>
+
+          <div class="checkbox-row">
+            <input id="privacyConfirmation" type="checkbox" required />
+            <label for="privacyConfirmation">
+              I have read the
+              <button id="privacyLink" class="link-button" type="button">
+                Business Verification Privacy Notice
+              </button>
+              and understand the stated sharing, cross-border processing,
+              retention and deletion arrangements.
+            </label>
+          </div>
+
+          <div class="checkbox-row">
+            <input id="termsConfirmation" type="checkbox" required />
+            <label for="termsConfirmation">
+              I agree to the
+              <button id="termsLink" class="link-button" type="button">
+                Kaarox Terms of Service</button
+              >.
+            </label>
+          </div>
+        </fieldset>
+
+        <button id="verifyButton" class="primary" type="submit">
+          Submit documents and start identity check
+        </button>
+      </form>
     </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-functions-compat.js"></script>
+    <script>
+      (() => {
+        "use strict";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyBs7pRnnJKpY39oQ-8TUaTSi_3ZgYfnt8s",
+          authDomain: "nexus-601bd.firebaseapp.com",
+          projectId: "nexus-601bd",
+          storageBucket: "nexus-601bd.appspot.com",
+          messagingSenderId: "873657897341",
+          appId: "1:873657897341:web:f071a476f9372e3b523c14",
+          measurementId: "G-Q3PNQ3NYYZ",
+        };
+
+        const FUNCTIONS_REGION = "europe-west1";
+        const COUNTRY_CODES =
+          "AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW".split(
+            " ",
+          );
+        const PRIVACY_URL =
+          "https://nexus-601bd.web.app/business-verification-privacy.html";
+        const TERMS_URL = "https://kaarox.com/terms";
+        const MAX_FILE_BYTES = 5 * 1024 * 1024;
+        const ALLOWED_CONTENT_TYPES = new Set([
+          "application/pdf",
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+        ]);
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        const functions = firebase.app().functions(FUNCTIONS_REGION);
+
+        const form = document.getElementById("verificationForm");
+        const emailInput = document.getElementById("userEmail");
+        const statusCard = document.getElementById("statusCard");
+        const verifyButton = document.getElementById("verifyButton");
+        const countryCode = document.getElementById("countryCode");
+        const issuingAuthority = document.getElementById("issuingAuthority");
+        const representativeRole =
+          document.getElementById("representativeRole");
+        const authorityDocumentWrap = document.getElementById(
+          "authorityDocumentWrap",
+        );
+        const authorityDocument = document.getElementById("authorityDocument");
+        const licenseExpiryDate = document.getElementById("licenseExpiryDate");
+
+        let unsubscribeVerification = null;
+        let decisionPollTimer = null;
+        let lastCustomToken = "";
+        let terminalEventSent = false;
+
+        const today = new Date();
+        today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+        licenseExpiryDate.min = today.toISOString().slice(0, 10);
+
+        const regionNames =
+          typeof Intl.DisplayNames === "function"
+            ? new Intl.DisplayNames([navigator.language || "en"], {
+                type: "region",
+              })
+            : null;
+        const countries = COUNTRY_CODES.map((code) => ({
+          code,
+          name: regionNames?.of(code) || code,
+        })).sort((left, right) => left.name.localeCompare(right.name));
+        for (const country of countries) {
+          const option = document.createElement("option");
+          option.value = country.code;
+          option.textContent = country.name;
+          countryCode.appendChild(option);
+        }
+        try {
+          const localeRegion = new Intl.Locale(navigator.language).region;
+          if (COUNTRY_CODES.includes(localeRegion)) {
+            countryCode.value = localeRegion;
+          }
+        } catch (_) {}
+
+        function postToNative(payload) {
+          try {
+            if (window.ReactNativeWebView) {
+              window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+            }
+          } catch (_) {}
+        }
+
+        function setStatus(message, kind = "processing") {
+          statusCard.className = `status ${kind}`;
+          statusCard.textContent = message;
+        }
+
+        function openExternal(url) {
+          if (window.ReactNativeWebView) {
+            postToNative({ event: "openExternal", url });
+          } else {
+            window.open(url, "_blank", "noopener,noreferrer");
+          }
+        }
+
+        document
+          .getElementById("privacyLink")
+          .addEventListener("click", () => openExternal(PRIVACY_URL));
+        document
+          .getElementById("termsLink")
+          .addEventListener("click", () => openExternal(TERMS_URL));
+
+        representativeRole.addEventListener("change", () => {
+          const needsAuthority =
+            representativeRole.value === "authorized_representative";
+          authorityDocumentWrap.classList.toggle("hidden", !needsAuthority);
+          authorityDocument.required = needsAuthority;
+          if (!needsAuthority) authorityDocument.value = "";
+        });
+
+        function requireSignedIn() {
+          if (!auth.currentUser) {
+            throw new Error(
+              "Your secure verification session expired. Return to Kaarox and try again.",
+            );
+          }
+          return auth.currentUser;
+        }
+
+        function randomVerificationId() {
+          if (crypto.randomUUID) return crypto.randomUUID().replaceAll("-", "");
+          const bytes = crypto.getRandomValues(new Uint8Array(24));
+          return Array.from(bytes, (value) =>
+            value.toString(16).padStart(2, "0"),
+          ).join("");
+        }
+
+        async function sha256(file) {
+          const bytes = await file.arrayBuffer();
+          const digest = await crypto.subtle.digest("SHA-256", bytes);
+          return Array.from(new Uint8Array(digest), (value) =>
+            value.toString(16).padStart(2, "0"),
+          ).join("");
+        }
+
+        async function inspectFile(file) {
+          if (!file) throw new Error("A required document is missing.");
+          if (file.size <= 0 || file.size > MAX_FILE_BYTES) {
+            throw new Error(
+              `${file.name || "Document"} must be smaller than 5 MB.`,
+            );
+          }
+
+          const header = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+          const hex = Array.from(header, (value) =>
+            value.toString(16).padStart(2, "0"),
+          ).join("");
+
+          let contentType = "";
+          let extension = "";
+          if (hex.startsWith("25504446")) {
+            contentType = "application/pdf";
+            extension = "pdf";
+          } else if (hex.startsWith("ffd8ff")) {
+            contentType = "image/jpeg";
+            extension = "jpg";
+          } else if (hex.startsWith("89504e470d0a1a0a")) {
+            contentType = "image/png";
+            extension = "png";
+          } else if (
+            hex.startsWith("52494646") &&
+            hex.slice(16, 24) === "57454250"
+          ) {
+            contentType = "image/webp";
+            extension = "webp";
+          }
+
+          if (!ALLOWED_CONTENT_TYPES.has(contentType)) {
+            throw new Error(
+              `${file.name || "Document"} is not a supported PDF or image.`,
+            );
+          }
+
+          return {
+            contentType,
+            extension,
+            size: file.size,
+            sha256: await sha256(file),
+          };
+        }
+
+        async function uploadEvidence(file, uid, verificationId, kind) {
+          const inspected = await inspectFile(file);
+          const path = `verification-submissions/${uid}/${verificationId}/${kind}.${inspected.extension}`;
+          const reference = storage.ref().child(path);
+          await reference.put(file, {
+            contentType: inspected.contentType,
+            customMetadata: {
+              sha256: inspected.sha256,
+              evidenceKind: kind,
+              verificationId,
+            },
+          });
+
+          return {
+            path,
+            contentType: inspected.contentType,
+            size: inspected.size,
+            sha256: inspected.sha256,
+          };
+        }
+
+        function resolvedIssuingAuthority() {
+          return issuingAuthority.value.trim();
+        }
+
+        function readSubmissionData() {
+          return {
+            countryCode: countryCode.value,
+            legalBusinessName: document
+              .getElementById("legalBusinessName")
+              .value.trim(),
+            tradeName: document.getElementById("tradeName").value.trim(),
+            licenseNumber: document
+              .getElementById("licenseNumber")
+              .value.trim(),
+            issuingAuthority: resolvedIssuingAuthority(),
+            licenseExpiryDate: licenseExpiryDate.value,
+            licensedActivities: document
+              .getElementById("licensedActivities")
+              .value.trim(),
+            taxId: document.getElementById("taxId").value.trim(),
+            businessWebsite: document
+              .getElementById("businessWebsite")
+              .value.trim(),
+            representativeName: document
+              .getElementById("representativeName")
+              .value.trim(),
+            representativeRole: representativeRole.value,
+            confirmations: {
+              authorityConfirmed: document.getElementById(
+                "authorityConfirmation",
+              ).checked,
+              biometricConsent:
+                document.getElementById("biometricConsent").checked,
+              privacyNoticeAccepted: document.getElementById(
+                "privacyConfirmation",
+              ).checked,
+              termsAccepted:
+                document.getElementById("termsConfirmation").checked,
+              noticeVersion: "2026-08-07-global-v1",
+            },
+          };
+        }
+
+        async function startDecisionPolling() {
+          if (decisionPollTimer) return;
+          const syncDecision = functions.httpsCallable("syncKycDecision");
+          decisionPollTimer = setInterval(async () => {
+            try {
+              await syncDecision();
+            } catch (_) {}
+          }, 20000);
+          setTimeout(
+            () => {
+              clearInterval(decisionPollTimer);
+              decisionPollTimer = null;
+            },
+            5 * 60 * 1000,
+          );
+        }
+
+        function subscribeToVerification(uid) {
+          if (unsubscribeVerification) unsubscribeVerification();
+          unsubscribeVerification = db
+            .collection("verifications")
+            .doc(uid)
+            .onSnapshot(
+              (snapshot) => {
+                const verification = snapshot.data() || {};
+                const identityStatus = String(
+                  verification?.identity?.status || "",
+                ).toLowerCase();
+                const businessStatus = String(
+                  verification?.business?.status || "",
+                ).toLowerCase();
+                const overallStatus = String(
+                  verification?.status || "",
+                ).toLowerCase();
+
+                if (identityStatus === "rejected" && !terminalEventSent) {
+                  terminalEventSent = true;
+                  setStatus(
+                    "The representative identity check was not approved.",
+                    "error",
+                  );
+                  postToNative({ event: "identityRejected" });
+                  return;
+                }
+
+                if (
+                  identityStatus === "approved" &&
+                  ["pending_review", "approved"].includes(businessStatus)
+                ) {
+                  setStatus(
+                    overallStatus === "verified"
+                      ? "Business verification approved."
+                      : "Identity approved. The business registration is pending review.",
+                    "success",
+                  );
+                  if (!terminalEventSent) {
+                    terminalEventSent = true;
+                    postToNative({
+                      event: "verificationSubmitted",
+                      status: overallStatus || "pending_review",
+                    });
+                  }
+                  if (decisionPollTimer) {
+                    clearInterval(decisionPollTimer);
+                    decisionPollTimer = null;
+                  }
+                }
+              },
+              () =>
+                setStatus(
+                  "Waiting for the secure verification result…",
+                  "processing",
+                ),
+            );
+        }
+
+        auth.onAuthStateChanged((user) => {
+          if (!user) {
+            setStatus(
+              "Open this form from a signed-in Kaarox account.",
+              "error",
+            );
+            return;
+          }
+          emailInput.value = user.email || emailInput.value;
+          subscribeToVerification(user.uid);
+          setStatus("Secure session ready.", "success");
+        });
+
+        async function acceptHostAuthentication(event) {
+          let payload = event?.data;
+          try {
+            if (typeof payload === "string") payload = JSON.parse(payload);
+          } catch {
+            return;
+          }
+          if (!payload || payload.event !== "kaaroxVerificationAuth") return;
+          if (!payload.customToken || payload.customToken === lastCustomToken)
+            return;
+
+          lastCustomToken = payload.customToken;
+          emailInput.value = String(payload.email || "");
+          try {
+            await auth.signInWithCustomToken(payload.customToken);
+            postToNative({ event: "kycFormAuthenticated" });
+          } catch (error) {
+            lastCustomToken = "";
+            setStatus(
+              "The secure session could not be authenticated. Return to Kaarox and retry.",
+              "error",
+            );
+          }
+        }
+
+        window.addEventListener("message", acceptHostAuthentication);
+        document.addEventListener("message", acceptHostAuthentication);
+
+        form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          if (!form.reportValidity()) return;
+
+          try {
+            verifyButton.disabled = true;
+            terminalEventSent = false;
+            const user = requireSignedIn();
+            const submission = readSubmissionData();
+            const verificationId = randomVerificationId();
+
+            if (!submission.confirmations.biometricConsent) {
+              throw new Error("Identity verification consent is required.");
+            }
+
+            setStatus("Securely uploading business evidence…", "processing");
+            const licenseFile =
+              document.getElementById("licenseDocument").files[0];
+            const authorityFile = authorityDocument.files[0];
+            const licenseEvidence = await uploadEvidence(
+              licenseFile,
+              user.uid,
+              verificationId,
+              "business-licence",
+            );
+            const authorityEvidence = authorityFile
+              ? await uploadEvidence(
+                  authorityFile,
+                  user.uid,
+                  verificationId,
+                  "representative-authority",
+                )
+              : null;
+
+            setStatus("Registering the verification request…", "processing");
+            const submitVerification = functions.httpsCallable(
+              "submitBusinessVerification",
+            );
+            await submitVerification({
+              verificationId,
+              business: submission,
+              evidence: {
+                licenseDocument: licenseEvidence,
+                authorityDocument: authorityEvidence,
+              },
+            });
+
+            setStatus(
+              "Starting the representative identity check…",
+              "processing",
+            );
+            const createKycSession =
+              functions.httpsCallable("createKycSession");
+            const response = await createKycSession({
+              verificationId,
+              fullName: submission.representativeName,
+              email: user.email || emailInput.value,
+            });
+            const startUrl = String(response?.data?.startUrl || "");
+            const sessionId = String(response?.data?.sessionId || "");
+            if (!startUrl || !sessionId) {
+              throw new Error(
+                "The identity-check session could not be created.",
+              );
+            }
+
+            postToNative({ event: "startKyc", url: startUrl });
+            startDecisionPolling();
+            setStatus(
+              "Identity check started. Your business badge remains inactive until both identity and official business-registration checks are approved.",
+              "processing",
+            );
+          } catch (error) {
+            console.error("Business verification submission failed:", error);
+            setStatus(
+              error?.message || "Verification could not be submitted.",
+              "error",
+            );
+          } finally {
+            verifyButton.disabled = false;
+          }
+        });
+
+        window.addEventListener("beforeunload", () => {
+          if (unsubscribeVerification) unsubscribeVerification();
+          if (decisionPollTimer) clearInterval(decisionPollTimer);
+        });
+
+        setTimeout(() => postToNative({ event: "kycFormReady" }), 0);
+      })();
+    </script>
   </body>
 </html>
