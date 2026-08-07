@@ -204,16 +204,16 @@
     <main class="container">
       <h1>Business verification</h1>
       <p class="intro">
-        Kaarox checks the representative's identity and the business's official
-        registration or licence before displaying a verification badge.
+        Apply for a Registered Business badge by providing official registration
+        details and evidence that you are authorised to represent the business.
       </p>
 
       <div class="notice">
         <strong>What the badge means</strong>
-        Kaarox checked the representative identity and the business registration
-        against an official registry or issuing authority on a stated date. It
-        is not government approval and does not guarantee service quality,
-        financial standing or future conduct.
+        Kaarox confirmed the business registration and representative authority
+        against submitted evidence and an official registry or issuing authority
+        on a stated date. It is not government certification and does not
+        guarantee service quality, financial standing or future conduct.
       </div>
 
       <div
@@ -263,7 +263,7 @@
 
           <div class="grid">
             <div>
-              <label for="country">Country</label>
+              <label for="countryCode">Country</label>
               <select id="countryCode" required>
                 <option value="">Select the country</option>
               </select>
@@ -350,6 +350,31 @@
               Authorised representative
             </option>
           </select>
+
+          <label for="representativeControlMethod"
+            >How Kaarox can confirm your authority</label
+          >
+          <select id="representativeControlMethod" required>
+            <option value="">Select an authority method</option>
+            <option value="named_on_registration">
+              My name and role appear on the registration or licence
+            </option>
+            <option value="authority_document">
+              I will provide a business authorisation document
+            </option>
+          </select>
+
+          <label for="businessEmail"
+            >Official business email
+            <span class="optional">(optional supporting information)</span></label
+          >
+          <input
+            id="businessEmail"
+            type="email"
+            maxlength="254"
+            autocomplete="email"
+            placeholder="name@business.com"
+          />
         </fieldset>
 
         <fieldset>
@@ -376,14 +401,15 @@
               accept="application/pdf,image/jpeg,image/png,image/webp"
             />
             <div class="help">
-              Required for an authorised representative. Do not upload an ID
-              here; Veriff handles identity documents separately.
+              Required when your authority is not shown on the registration or
+              licence. Upload a signed authorisation letter or equivalent—not a
+              passport, national ID, selfie or biometric document.
             </div>
           </div>
         </fieldset>
 
         <fieldset>
-          <h2>Confirmations and consent</h2>
+          <h2>Confirmations</h2>
 
           <div class="checkbox-row">
             <input id="authorityConfirmation" type="checkbox" required />
@@ -392,15 +418,6 @@
               that the information and documents provided are accurate and
               current.</label
             >
-          </div>
-
-          <div class="checkbox-row">
-            <input id="biometricConsent" type="checkbox" required />
-            <label for="biometricConsent">
-              I consent to Veriff processing my identity document, facial image
-              and biometric comparison for representative identity verification,
-              and to Kaarox receiving the verification result.
-            </label>
           </div>
 
           <div class="checkbox-row">
@@ -427,7 +444,7 @@
         </fieldset>
 
         <button id="verifyButton" class="primary" type="submit">
-          Submit documents and start identity check
+          Submit for registry review
         </button>
       </form>
     </main>
@@ -481,6 +498,9 @@
         const issuingAuthority = document.getElementById("issuingAuthority");
         const representativeRole =
           document.getElementById("representativeRole");
+        const representativeControlMethod = document.getElementById(
+          "representativeControlMethod",
+        );
         const authorityDocumentWrap = document.getElementById(
           "authorityDocumentWrap",
         );
@@ -488,9 +508,8 @@
         const licenseExpiryDate = document.getElementById("licenseExpiryDate");
 
         let unsubscribeVerification = null;
-        let decisionPollTimer = null;
         let lastCustomToken = "";
-        let terminalEventSent = false;
+        let lastObservedStatus = "";
 
         const today = new Date();
         today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
@@ -547,13 +566,23 @@
           .getElementById("termsLink")
           .addEventListener("click", () => openExternal(TERMS_URL));
 
-        representativeRole.addEventListener("change", () => {
+        function updateAuthorityEvidenceRequirement() {
           const needsAuthority =
-            representativeRole.value === "authorized_representative";
+            representativeRole.value === "authorized_representative" ||
+            representativeControlMethod.value === "authority_document";
           authorityDocumentWrap.classList.toggle("hidden", !needsAuthority);
           authorityDocument.required = needsAuthority;
           if (!needsAuthority) authorityDocument.value = "";
-        });
+        }
+
+        representativeRole.addEventListener(
+          "change",
+          updateAuthorityEvidenceRequirement,
+        );
+        representativeControlMethod.addEventListener(
+          "change",
+          updateAuthorityEvidenceRequirement,
+        );
 
         function requireSignedIn() {
           if (!auth.currentUser) {
@@ -670,41 +699,27 @@
             businessWebsite: document
               .getElementById("businessWebsite")
               .value.trim(),
+            businessEmail: document
+              .getElementById("businessEmail")
+              .value.trim(),
             representativeName: document
               .getElementById("representativeName")
               .value.trim(),
             representativeRole: representativeRole.value,
+            representativeControlMethod:
+              representativeControlMethod.value,
             confirmations: {
               authorityConfirmed: document.getElementById(
                 "authorityConfirmation",
               ).checked,
-              biometricConsent:
-                document.getElementById("biometricConsent").checked,
               privacyNoticeAccepted: document.getElementById(
                 "privacyConfirmation",
               ).checked,
               termsAccepted:
                 document.getElementById("termsConfirmation").checked,
-              noticeVersion: "2026-08-07-global-v1",
+              noticeVersion: "2026-08-08-registry-v2",
             },
           };
-        }
-
-        async function startDecisionPolling() {
-          if (decisionPollTimer) return;
-          const syncDecision = functions.httpsCallable("syncKycDecision");
-          decisionPollTimer = setInterval(async () => {
-            try {
-              await syncDecision();
-            } catch (_) {}
-          }, 20000);
-          setTimeout(
-            () => {
-              clearInterval(decisionPollTimer);
-              decisionPollTimer = null;
-            },
-            5 * 60 * 1000,
-          );
         }
 
         function subscribeToVerification(uid) {
@@ -715,9 +730,6 @@
             .onSnapshot(
               (snapshot) => {
                 const verification = snapshot.data() || {};
-                const identityStatus = String(
-                  verification?.identity?.status || "",
-                ).toLowerCase();
                 const businessStatus = String(
                   verification?.business?.status || "",
                 ).toLowerCase();
@@ -725,37 +737,40 @@
                   verification?.status || "",
                 ).toLowerCase();
 
-                if (identityStatus === "rejected" && !terminalEventSent) {
-                  terminalEventSent = true;
+                if (
+                  overallStatus === "rejected" ||
+                  businessStatus === "rejected"
+                ) {
                   setStatus(
-                    "The representative identity check was not approved.",
+                    verification?.business?.registry?.userMessage ||
+                      "The Registered Business application was not approved. You may correct the information and submit again.",
                     "error",
                   );
-                  postToNative({ event: "identityRejected" });
+                  if (lastObservedStatus !== "rejected") {
+                    postToNative({ event: "verificationRejected" });
+                  }
+                  lastObservedStatus = "rejected";
+                  return;
+                }
+
+                if (overallStatus === "verified") {
+                  lastObservedStatus = "verified";
+                  setStatus(
+                    "Registered Business badge approved.",
+                    "success",
+                  );
                   return;
                 }
 
                 if (
-                  identityStatus === "approved" &&
-                  ["pending_review", "approved"].includes(businessStatus)
+                  overallStatus === "pending_review" ||
+                  businessStatus === "pending_review"
                 ) {
+                  lastObservedStatus = "pending_review";
                   setStatus(
-                    overallStatus === "verified"
-                      ? "Business verification approved."
-                      : "Identity approved. The business registration is pending review.",
-                    "success",
+                    "Your documents were submitted. Kaarox is checking the registration and representative authority.",
+                    "processing",
                   );
-                  if (!terminalEventSent) {
-                    terminalEventSent = true;
-                    postToNative({
-                      event: "verificationSubmitted",
-                      status: overallStatus || "pending_review",
-                    });
-                  }
-                  if (decisionPollTimer) {
-                    clearInterval(decisionPollTimer);
-                    decisionPollTimer = null;
-                  }
                 }
               },
               () =>
@@ -794,7 +809,7 @@
           emailInput.value = String(payload.email || "");
           try {
             await auth.signInWithCustomToken(payload.customToken);
-            postToNative({ event: "kycFormAuthenticated" });
+            postToNative({ event: "verificationFormAuthenticated" });
           } catch (error) {
             lastCustomToken = "";
             setStatus(
@@ -813,14 +828,9 @@
 
           try {
             verifyButton.disabled = true;
-            terminalEventSent = false;
             const user = requireSignedIn();
             const submission = readSubmissionData();
             const verificationId = randomVerificationId();
-
-            if (!submission.confirmations.biometricConsent) {
-              throw new Error("Identity verification consent is required.");
-            }
 
             setStatus("Securely uploading business evidence…", "processing");
             const licenseFile =
@@ -855,30 +865,13 @@
             });
 
             setStatus(
-              "Starting the representative identity check…",
-              "processing",
+              "Documents submitted. Kaarox will check the official registration and your authority to represent the business. No badge is displayed until the review is approved.",
+              "success",
             );
-            const createKycSession =
-              functions.httpsCallable("createKycSession");
-            const response = await createKycSession({
-              verificationId,
-              fullName: submission.representativeName,
-              email: user.email || emailInput.value,
+            postToNative({
+              event: "verificationSubmitted",
+              status: "pending_review",
             });
-            const startUrl = String(response?.data?.startUrl || "");
-            const sessionId = String(response?.data?.sessionId || "");
-            if (!startUrl || !sessionId) {
-              throw new Error(
-                "The identity-check session could not be created.",
-              );
-            }
-
-            postToNative({ event: "startKyc", url: startUrl });
-            startDecisionPolling();
-            setStatus(
-              "Identity check started. Your business badge remains inactive until both identity and official business-registration checks are approved.",
-              "processing",
-            );
           } catch (error) {
             console.error("Business verification submission failed:", error);
             setStatus(
@@ -892,10 +885,12 @@
 
         window.addEventListener("beforeunload", () => {
           if (unsubscribeVerification) unsubscribeVerification();
-          if (decisionPollTimer) clearInterval(decisionPollTimer);
         });
 
-        setTimeout(() => postToNative({ event: "kycFormReady" }), 0);
+        setTimeout(
+          () => postToNative({ event: "verificationFormReady" }),
+          0,
+        );
       })();
     </script>
   </body>
