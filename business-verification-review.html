@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <title>Kaarox Business Verification Review</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --blue: #0878ed;
+        --ink: #152033;
+        --muted: #5f6b7a;
+        --border: #d7dee8;
+        --soft: #f6f8fb;
+        --danger: #b42318;
+        --success: #087a42;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--soft);
+        color: var(--ink);
+        font:
+          15px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+      main {
+        width: min(1040px, 100%);
+        min-height: 100vh;
+        margin: 0 auto;
+        padding: 28px 18px 60px;
+        background: #fff;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 22px;
+      }
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .panel,
+      .review-card {
+        margin: 16px 0;
+        padding: 18px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+      }
+      .review-card {
+        box-shadow: 0 5px 18px rgba(21, 32, 51, 0.06);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px 18px;
+        margin: 16px 0;
+      }
+      .field-value strong {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      label {
+        display: block;
+        margin-top: 12px;
+        font-weight: 650;
+      }
+      input,
+      textarea {
+        width: 100%;
+        margin-top: 5px;
+        padding: 10px 11px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font: inherit;
+      }
+      textarea {
+        min-height: 84px;
+        resize: vertical;
+      }
+      .check {
+        display: flex;
+        gap: 9px;
+        align-items: flex-start;
+        margin-top: 10px;
+        font-weight: 500;
+      }
+      .check input {
+        width: auto;
+        margin-top: 4px;
+      }
+      .actions,
+      .document-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 14px;
+      }
+      button,
+      .document-links a {
+        border: 0;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      button.primary {
+        background: var(--blue);
+        color: #fff;
+      }
+      button.secondary,
+      .document-links a {
+        background: #eef3f8;
+        color: var(--ink);
+      }
+      button.danger {
+        background: #fff0ef;
+        color: var(--danger);
+      }
+      button:disabled {
+        opacity: 0.55;
+        cursor: wait;
+      }
+      #status {
+        display: none;
+        margin: 12px 0;
+        padding: 12px;
+        border-radius: 8px;
+      }
+      #status.visible {
+        display: block;
+        background: #eef3f8;
+      }
+      #status.error {
+        color: var(--danger);
+        background: #fff0ef;
+      }
+      #status.success {
+        color: var(--success);
+        background: #eef9f2;
+      }
+      .hidden {
+        display: none;
+      }
+      @media (max-width: 700px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>Business verification review</h1>
+          <div class="muted">
+            Reviewer-only registry and representative-authority checks
+          </div>
+        </div>
+        <button id="signOutButton" class="secondary hidden" type="button">
+          Sign out
+        </button>
+      </header>
+
+      <div id="status" role="status" aria-live="polite"></div>
+
+      <form id="signInForm" class="panel">
+        <h2>Reviewer sign in</h2>
+        <label for="reviewerEmail">Email</label>
+        <input
+          id="reviewerEmail"
+          type="email"
+          autocomplete="username"
+          required
+        />
+        <label for="reviewerPassword">Password</label>
+        <input
+          id="reviewerPassword"
+          type="password"
+          autocomplete="current-password"
+          required
+        />
+        <div class="actions">
+          <button class="primary" type="submit">Sign in securely</button>
+        </div>
+        <p class="muted">
+          Access also requires an administrator or
+          business-verification-reviewer Firebase custom claim.
+        </p>
+      </form>
+
+      <section id="reviewWorkspace" class="hidden">
+        <div class="actions">
+          <button id="refreshButton" class="secondary" type="button">
+            Refresh pending applications
+          </button>
+        </div>
+        <div id="reviewList"></div>
+      </section>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-functions-compat.js"></script>
+    <script>
+      (() => {
+        "use strict";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyBs7pRnnJKpY39oQ-8TUaTSi_3ZgYfnt8s",
+          authDomain: "nexus-601bd.firebaseapp.com",
+          projectId: "nexus-601bd",
+          storageBucket: "nexus-601bd.appspot.com",
+          messagingSenderId: "873657897341",
+          appId: "1:873657897341:web:f071a476f9372e3b523c14",
+        };
+        const FUNCTIONS_REGION = "europe-west1";
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const functions = firebase.app().functions(FUNCTIONS_REGION);
+        const getEvidence = functions.httpsCallable(
+          "reviewerGetBusinessEvidence",
+        );
+        const submitReview = functions.httpsCallable(
+          "reviewBusinessVerification",
+        );
+
+        const signInForm = document.getElementById("signInForm");
+        const signOutButton = document.getElementById("signOutButton");
+        const reviewWorkspace = document.getElementById("reviewWorkspace");
+        const reviewList = document.getElementById("reviewList");
+        const refreshButton = document.getElementById("refreshButton");
+        const status = document.getElementById("status");
+
+        function setStatus(message, kind = "visible") {
+          status.className = `${kind} visible`;
+          status.textContent = message;
+        }
+
+        function clearStatus() {
+          status.className = "";
+          status.textContent = "";
+        }
+
+        function node(tag, className = "", text = "") {
+          const element = document.createElement(tag);
+          if (className) element.className = className;
+          if (text) element.textContent = text;
+          return element;
+        }
+
+        function valueText(value) {
+          if (value == null || value === "") return "Not provided";
+          if (value?.toDate) return value.toDate().toLocaleDateString();
+          return String(value);
+        }
+
+        function addValue(grid, label, value) {
+          const wrap = node("div", "field-value");
+          wrap.append(node("strong", "", label));
+          wrap.append(node("span", "", valueText(value)));
+          grid.append(wrap);
+        }
+
+        function inputField(labelText, placeholder = "") {
+          const wrap = node("label", "", labelText);
+          const input = document.createElement("input");
+          input.type = "text";
+          input.placeholder = placeholder;
+          wrap.append(input);
+          return { wrap, input };
+        }
+
+        function checkbox(labelText) {
+          const wrap = node("label", "check");
+          const input = document.createElement("input");
+          input.type = "checkbox";
+          wrap.append(input, node("span", "", labelText));
+          return { wrap, input };
+        }
+
+        async function loadDocuments(uid, container, button) {
+          button.disabled = true;
+          try {
+            const response = await getEvidence({ uid });
+            const documents = Array.isArray(response?.data?.documents)
+              ? response.data.documents
+              : [];
+            container.replaceChildren();
+            if (!documents.length) {
+              container.append(
+                node("span", "muted", "No documents available."),
+              );
+              return;
+            }
+            for (const documentData of documents) {
+              const link = node(
+                "a",
+                "",
+                documentData.kind === "authority"
+                  ? "Open authority document"
+                  : "Open registration document",
+              );
+              link.href = String(documentData.url || "");
+              link.target = "_blank";
+              link.rel = "noopener noreferrer";
+              container.append(link);
+            }
+          } catch (error) {
+            setStatus(
+              error?.message || "Documents could not be opened.",
+              "error",
+            );
+          } finally {
+            button.disabled = false;
+          }
+        }
+
+        function renderApplication(snapshot) {
+          const data = snapshot.data() || {};
+          const business = data.business || {};
+          const representative = data.representative || {};
+          const card = node("article", "review-card");
+          card.append(
+            node("h2", "", business.legalBusinessName || "Unnamed business"),
+          );
+          card.append(node("div", "muted", `UID: ${snapshot.id}`));
+
+          const grid = node("div", "grid");
+          addValue(grid, "Country", business.countryCode);
+          addValue(grid, "Trading name", business.tradeName);
+          addValue(grid, "Registration / licence", business.licenseNumber);
+          addValue(grid, "Issuing authority", business.issuingAuthority);
+          addValue(grid, "Expiry", business.licenseExpiryDate);
+          addValue(grid, "Activities", business.licensedActivities);
+          addValue(grid, "Website", business.businessWebsite);
+          addValue(grid, "Business email", business.businessEmail);
+          addValue(
+            grid,
+            "Representative",
+            representative.name || business.representativeName,
+          );
+          addValue(
+            grid,
+            "Role",
+            representative.role || business.representativeRole,
+          );
+          addValue(
+            grid,
+            "Authority method",
+            representative.controlMethod ||
+              business.representativeControlMethod,
+          );
+          addValue(grid, "Submitted", data.submittedAt);
+          card.append(grid);
+
+          const documentActions = node("div", "actions");
+          const documentButton = node(
+            "button",
+            "secondary",
+            "Load private evidence",
+          );
+          documentButton.type = "button";
+          const documentLinks = node("div", "document-links");
+          documentButton.addEventListener("click", () =>
+            loadDocuments(snapshot.id, documentLinks, documentButton),
+          );
+          documentActions.append(documentButton);
+          card.append(documentActions, documentLinks);
+
+          const registryName = inputField(
+            "Official registry or issuing authority used",
+            "Example: UAE National Economic Register",
+          );
+          registryName.input.value = business.issuingAuthority || "";
+          const registryReference = inputField(
+            "Official registry reference or lookup URL",
+            "Official result URL or reference number",
+          );
+          card.append(registryName.wrap, registryReference.wrap);
+
+          const registrationActive = checkbox(
+            "The official registry shows the registration as active.",
+          );
+          const matchedLegalName = checkbox(
+            "The legal business name matches the official registry.",
+          );
+          const matchedRegistrationNumber = checkbox(
+            "The registration or licence number matches the official registry.",
+          );
+          const representativeAuthorityConfirmed = checkbox(
+            "The documents confirm the applicant's authority to represent the business.",
+          );
+          const matchedActivities = checkbox(
+            "The stated activities match the registration where applicable.",
+          );
+          card.append(
+            registrationActive.wrap,
+            matchedLegalName.wrap,
+            matchedRegistrationNumber.wrap,
+            representativeAuthorityConfirmed.wrap,
+            matchedActivities.wrap,
+          );
+
+          const rejectionReason = inputField(
+            "Rejection reason code",
+            "Example: registration_not_found",
+          );
+          const rejectionMessage = node(
+            "label",
+            "",
+            "Message shown to the applicant",
+          );
+          const rejectionText = document.createElement("textarea");
+          rejectionText.maxLength = 500;
+          rejectionMessage.append(rejectionText);
+          card.append(rejectionReason.wrap, rejectionMessage);
+
+          const actions = node("div", "actions");
+          const approveButton = node(
+            "button",
+            "primary",
+            "Approve Registered Business badge",
+          );
+          approveButton.type = "button";
+          const rejectButton = node("button", "danger", "Reject application");
+          rejectButton.type = "button";
+
+          approveButton.addEventListener("click", async () => {
+            approveButton.disabled = true;
+            rejectButton.disabled = true;
+            clearStatus();
+            try {
+              await submitReview({
+                uid: snapshot.id,
+                decision: "approved",
+                registryName: registryName.input.value.trim(),
+                registryReference: registryReference.input.value.trim(),
+                registrationActive: registrationActive.input.checked,
+                matchedLegalName: matchedLegalName.input.checked,
+                matchedRegistrationNumber:
+                  matchedRegistrationNumber.input.checked,
+                representativeAuthorityConfirmed:
+                  representativeAuthorityConfirmed.input.checked,
+                matchedActivities: matchedActivities.input.checked,
+              });
+              setStatus("Registered Business badge approved.", "success");
+              await loadPendingApplications();
+            } catch (error) {
+              setStatus(error?.message || "Approval failed.", "error");
+            } finally {
+              approveButton.disabled = false;
+              rejectButton.disabled = false;
+            }
+          });
+
+          rejectButton.addEventListener("click", async () => {
+            approveButton.disabled = true;
+            rejectButton.disabled = true;
+            clearStatus();
+            try {
+              await submitReview({
+                uid: snapshot.id,
+                decision: "rejected",
+                reasonCode: rejectionReason.input.value.trim(),
+                userMessage: rejectionText.value.trim(),
+              });
+              setStatus("Application rejected.", "success");
+              await loadPendingApplications();
+            } catch (error) {
+              setStatus(error?.message || "Rejection failed.", "error");
+            } finally {
+              approveButton.disabled = false;
+              rejectButton.disabled = false;
+            }
+          });
+
+          actions.append(approveButton, rejectButton);
+          card.append(actions);
+          return card;
+        }
+
+        async function loadPendingApplications() {
+          refreshButton.disabled = true;
+          reviewList.replaceChildren(
+            node("p", "muted", "Loading pending applications…"),
+          );
+          try {
+            const result = await db
+              .collection("verifications")
+              .where("status", "==", "pending_review")
+              .limit(50)
+              .get();
+            reviewList.replaceChildren();
+            if (result.empty) {
+              reviewList.append(node("p", "muted", "No pending applications."));
+              return;
+            }
+            for (const snapshot of result.docs) {
+              reviewList.append(renderApplication(snapshot));
+            }
+          } catch (error) {
+            reviewList.replaceChildren();
+            setStatus(
+              error?.message || "Applications could not be loaded.",
+              "error",
+            );
+          } finally {
+            refreshButton.disabled = false;
+          }
+        }
+
+        signInForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          clearStatus();
+          try {
+            await auth.signInWithEmailAndPassword(
+              document.getElementById("reviewerEmail").value.trim(),
+              document.getElementById("reviewerPassword").value,
+            );
+          } catch (error) {
+            setStatus(error?.message || "Sign-in failed.", "error");
+          }
+        });
+
+        signOutButton.addEventListener("click", () => auth.signOut());
+        refreshButton.addEventListener("click", loadPendingApplications);
+
+        auth.onAuthStateChanged(async (user) => {
+          clearStatus();
+          signInForm.classList.toggle("hidden", !!user);
+          signOutButton.classList.toggle("hidden", !user);
+          reviewWorkspace.classList.add("hidden");
+          reviewList.replaceChildren();
+          if (!user) return;
+
+          try {
+            const token = await user.getIdTokenResult(true);
+            const authorised =
+              token.claims.admin === true ||
+              token.claims.role === "admin" ||
+              token.claims.businessVerificationReviewer === true;
+            if (!authorised) {
+              setStatus(
+                "This account does not have business-verification reviewer access.",
+                "error",
+              );
+              return;
+            }
+            reviewWorkspace.classList.remove("hidden");
+            await loadPendingApplications();
+          } catch (error) {
+            setStatus(
+              error?.message || "Reviewer access could not be confirmed.",
+              "error",
+            );
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
