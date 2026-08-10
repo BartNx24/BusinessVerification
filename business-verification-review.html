@@ -486,6 +486,7 @@
       let unsubscribeVerification = null;
       let terminalEventSent = "";
       let authenticatedUid = "";
+      let injectedAccountEmail = "";
 
       function postToRN(payload) {
         try {
@@ -550,20 +551,50 @@
         if (!ALLOWED_MIME.has(detectedMime)) {
           throw new Error(`${label} must be a PDF, JPEG, PNG or WebP file.`);
         }
+        const extension =
+          detectedMime === "application/pdf"
+            ? "pdf"
+            : detectedMime === "image/jpeg"
+              ? "jpg"
+              : detectedMime === "image/png"
+                ? "png"
+                : "webp";
+
         return {
           mime: detectedMime,
+          extension,
           sha256: await sha256Hex(file),
         };
       }
 
-      async function uploadEvidence(file, path, label) {
+      async function uploadEvidence(
+        file,
+        basePath,
+        fileStem,
+        evidenceKind,
+        verificationId,
+        label,
+      ) {
         const checked = await preflightFile(file, label);
+        const path = `${basePath}/${fileStem}.${checked.extension}`;
         const ref = storage.ref().child(path);
+
         await ref.put(file, {
           contentType: checked.mime,
           cacheControl: "private,max-age=0,no-store",
+          customMetadata: {
+            verificationId,
+            evidenceKind,
+            sha256: checked.sha256,
+          },
         });
-        return { path, sha256: checked.sha256 };
+
+        return {
+          path,
+          contentType: checked.mime,
+          size: file.size,
+          sha256: checked.sha256,
+        };
       }
 
       function requiresAuthorityDocument() {
@@ -684,7 +715,10 @@
         const base = `verification-submissions/${user.uid}/${verificationId}`;
         const licenseDocument = await uploadEvidence(
           licenseFile,
-          `${base}/business-registration`,
+          base,
+          "business-licence",
+          "business-licence",
+          verificationId,
           "Business registration document",
         );
 
@@ -692,7 +726,10 @@
         if (requiresAuthorityDocument()) {
           authorityDocument = await uploadEvidence(
             authorityFile,
-            `${base}/representative-authority`,
+            base,
+            "representative-authority",
+            "representative-authority",
+            verificationId,
             "Representative authority document",
           );
         }
@@ -878,7 +915,7 @@
 
       auth.onAuthStateChanged((user) => {
         authenticatedUid = user?.uid || "";
-        emailInput.value = user?.email || "";
+        emailInput.value = user?.email || injectedAccountEmail || "";
         verifyButton.disabled = !user;
         if (!user) {
           activeVerificationId = "";
@@ -895,7 +932,10 @@
       async function applyInjectedAuth(message) {
         if (!message || typeof message !== "object") return;
         if (message.event && message.event !== "kaaroxVerificationAuth") return;
-        if (message.email) emailInput.value = String(message.email);
+        if (message.email) {
+          injectedAccountEmail = String(message.email).trim().toLowerCase();
+          emailInput.value = injectedAccountEmail;
+        }
         if (!message.customToken) return;
 
         try {
