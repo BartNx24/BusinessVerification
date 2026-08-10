@@ -1,591 +1,946 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width,initial-scale=1,viewport-fit=cover"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
-    <meta name="referrer" content="no-referrer" />
-    <meta name="robots" content="noindex,nofollow,noarchive" />
-    <title>Kaarox Business Verification Review</title>
+    <title>Kaarox Business Verification</title>
     <style>
       :root {
         color-scheme: light;
-        --blue: #0878ed;
-        --ink: #152033;
-        --muted: #5f6b7a;
-        --border: #d7dee8;
-        --soft: #f6f8fb;
+        --bg: #f4f6f8;
+        --card: #ffffff;
+        --text: #111827;
+        --muted: #667085;
+        --border: #d9dee7;
+        --accent: #32cd32;
+        --accent-dark: #20a920;
         --danger: #b42318;
-        --success: #087a42;
+        --warning: #9a6700;
+        --success: #08783e;
       }
       * {
         box-sizing: border-box;
       }
       body {
         margin: 0;
-        background: var(--soft);
-        color: var(--ink);
-        font:
-          15px/1.5 -apple-system,
-          BlinkMacSystemFont,
-          "Segoe UI",
-          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       }
-      main {
-        width: min(1040px, 100%);
-        min-height: 100vh;
-        margin: 0 auto;
-        padding: 28px 18px 60px;
-        background: #fff;
-      }
-      header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        margin-bottom: 22px;
-      }
-      h1,
-      h2,
-      h3 {
-        margin: 0;
-      }
-      .muted {
-        color: var(--muted);
-      }
-      .panel,
-      .review-card {
-        margin: 16px 0;
-        padding: 18px;
+      .container {
+        width: min(760px, calc(100% - 24px));
+        margin: 18px auto 32px;
+        background: var(--card);
         border: 1px solid var(--border);
-        border-radius: 12px;
-        background: #fff;
+        border-radius: 18px;
+        padding: 22px;
+        box-shadow: 0 8px 28px rgba(16, 24, 40, 0.08);
       }
-      .review-card {
-        box-shadow: 0 5px 18px rgba(21, 32, 51, 0.06);
+      h1 {
+        margin: 0 0 6px;
+        font-size: 26px;
+      }
+      h2 {
+        margin: 0 0 14px;
+        font-size: 18px;
+      }
+      p {
+        line-height: 1.5;
+      }
+      .intro {
+        color: var(--muted);
+        margin: 0 0 20px;
+      }
+      .section {
+        padding: 18px 0;
+        border-top: 1px solid #eef1f5;
+      }
+      .section:first-of-type {
+        border-top: 0;
+        padding-top: 4px;
+      }
+      .field {
+        margin-bottom: 14px;
       }
       .grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px 18px;
-        margin: 16px 0;
-      }
-      .field-value strong {
-        display: block;
-        color: var(--muted);
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
       }
       label {
         display: block;
-        margin-top: 12px;
-        font-weight: 650;
+        font-weight: 700;
+        margin-bottom: 6px;
+        font-size: 14px;
       }
       input,
+      select,
       textarea {
         width: 100%;
-        margin-top: 5px;
-        padding: 10px 11px;
         border: 1px solid var(--border);
-        border-radius: 8px;
+        border-radius: 10px;
+        padding: 11px 12px;
         font: inherit;
+        background: #fff;
+        color: var(--text);
       }
       textarea {
-        min-height: 84px;
+        min-height: 90px;
         resize: vertical;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: 2px solid rgba(50, 205, 50, 0.18);
+        border-color: var(--accent-dark);
+      }
+      input[type="file"] {
+        padding: 9px;
+      }
+      .hint {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.4;
       }
       .check {
         display: flex;
-        gap: 9px;
         align-items: flex-start;
-        margin-top: 10px;
-        font-weight: 500;
+        gap: 9px;
+        margin: 10px 0;
+        font-size: 13px;
+        line-height: 1.45;
       }
       .check input {
-        width: auto;
-        margin-top: 4px;
+        width: 18px;
+        height: 18px;
+        margin: 1px 0 0;
+        flex: 0 0 auto;
       }
-      .actions,
-      .document-links {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 14px;
-      }
-      button,
-      .document-links a {
-        border: 0;
-        border-radius: 8px;
-        padding: 10px 14px;
-        font: inherit;
-        font-weight: 700;
-        cursor: pointer;
-        text-decoration: none;
-      }
-      button.primary {
-        background: var(--blue);
-        color: #fff;
-      }
-      button.secondary,
-      .document-links a {
-        background: #eef3f8;
-        color: var(--ink);
-      }
-      button.danger {
-        background: #fff0ef;
-        color: var(--danger);
-      }
-      button:disabled {
-        opacity: 0.55;
-        cursor: wait;
-      }
-      #status {
+      .status {
         display: none;
-        margin: 12px 0;
-        padding: 12px;
-        border-radius: 8px;
+        margin: 0 0 18px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: #f8fafc;
+        font-size: 14px;
+        line-height: 1.45;
       }
-      #status.visible {
+      .status.processing {
         display: block;
-        background: #eef3f8;
+        background: #fff8e1;
+        border-color: #ffe082;
+        color: #6d4c00;
       }
-      #status.error {
-        color: var(--danger);
-        background: #fff0ef;
-      }
-      #status.success {
+      .status.success {
+        display: block;
+        background: #eaf8ef;
+        border-color: #a7ddba;
         color: var(--success);
-        background: #eef9f2;
+      }
+      .status.error {
+        display: block;
+        background: #fff0ee;
+        border-color: #f2b8b5;
+        color: var(--danger);
+      }
+      .status.info {
+        display: block;
+      }
+      .button {
+        width: 100%;
+        border: 0;
+        border-radius: 12px;
+        min-height: 50px;
+        padding: 12px 16px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 16px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .button:hover {
+        background: var(--accent-dark);
+      }
+      .button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .secure-note {
+        margin: 10px 0 0;
+        text-align: center;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .identity-note {
+        border: 1px solid #d8e6ff;
+        background: #f5f9ff;
+        padding: 12px;
+        border-radius: 12px;
+        color: #344054;
+        font-size: 13px;
+        line-height: 1.45;
       }
       .hidden {
-        display: none;
+        display: none !important;
       }
-      @media (max-width: 700px) {
+      @media (max-width: 640px) {
+        .container {
+          width: calc(100% - 16px);
+          margin: 8px auto 24px;
+          padding: 16px;
+          border-radius: 14px;
+        }
         .grid {
           grid-template-columns: 1fr;
+          gap: 0;
         }
-        header {
-          align-items: flex-start;
-          flex-direction: column;
+        h1 {
+          font-size: 23px;
         }
       }
     </style>
   </head>
   <body>
-    <main>
-      <header>
-        <div>
-          <h1>Business verification review</h1>
-          <div class="muted">
-            Reviewer-only registry and representative-authority checks
+    <main class="container">
+      <h1>Business Verification</h1>
+      <p class="intro">
+        Verify the representative's identity and the business registration
+        before Kaarox displays a Registered Business badge.
+      </p>
+
+      <div id="statusCard" class="status"></div>
+
+      <form id="verificationForm" novalidate>
+        <section class="section">
+          <h2>Account</h2>
+          <div class="field">
+            <label for="userEmail">Signed-in Kaarox account</label>
+            <input
+              id="userEmail"
+              type="email"
+              readonly
+              placeholder="Preparing secure session…"
+            />
+            <div class="hint">
+              Your Kaarox password is never sent to this webpage.
+            </div>
           </div>
-        </div>
-        <button id="signOutButton" class="secondary hidden" type="button">
-          Sign out
+        </section>
+
+        <section class="section">
+          <h2>Business details</h2>
+          <div class="grid">
+            <div class="field">
+              <label for="countryCode">Country code</label>
+              <input
+                id="countryCode"
+                maxlength="2"
+                autocomplete="country"
+                placeholder="AE"
+                required
+              />
+              <div class="hint">
+                Two-letter ISO code, for example AE, GB or US.
+              </div>
+            </div>
+            <div class="field">
+              <label for="legalBusinessName">Legal business name</label>
+              <input id="legalBusinessName" maxlength="160" required />
+            </div>
+          </div>
+
+          <div class="grid">
+            <div class="field">
+              <label for="tradeName">Trading name (optional)</label>
+              <input id="tradeName" maxlength="160" />
+            </div>
+            <div class="field">
+              <label for="licenseNumber">Registration / licence number</label>
+              <input id="licenseNumber" maxlength="80" required />
+            </div>
+          </div>
+
+          <div class="grid">
+            <div class="field">
+              <label for="issuingAuthority">Issuing authority</label>
+              <input
+                id="issuingAuthority"
+                maxlength="160"
+                placeholder="e.g. Meydan Free Zone"
+                required
+              />
+            </div>
+            <div class="field">
+              <label for="licenseExpiryDate"
+                >Licence expiry date (optional)</label
+              >
+              <input id="licenseExpiryDate" type="date" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="licensedActivities"
+              >Registered / licensed activities</label
+            >
+            <textarea
+              id="licensedActivities"
+              maxlength="1000"
+              required
+            ></textarea>
+          </div>
+
+          <div class="grid">
+            <div class="field">
+              <label for="taxId">Tax / VAT identifier (optional)</label>
+              <input id="taxId" maxlength="40" />
+            </div>
+            <div class="field">
+              <label for="businessEmail">Business email (optional)</label>
+              <input id="businessEmail" type="email" maxlength="254" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="businessWebsite">Business website (optional)</label>
+            <input
+              id="businessWebsite"
+              type="url"
+              maxlength="300"
+              placeholder="https://example.com"
+            />
+          </div>
+        </section>
+
+        <section class="section">
+          <h2>Business registration evidence</h2>
+          <div class="field">
+            <label for="licenseDocument"
+              >Registration / trade licence document</label
+            >
+            <input
+              id="licenseDocument"
+              type="file"
+              accept="application/pdf,image/jpeg,image/png,image/webp"
+              required
+            />
+            <div class="hint">
+              PDF, JPEG, PNG or WebP. Maximum 5 MB. Kaarox validates the actual
+              file type and file hash on the server.
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2>Representative</h2>
+          <div class="field">
+            <label for="representativeName">Representative full name</label>
+            <input id="representativeName" maxlength="160" required />
+          </div>
+
+          <div class="grid">
+            <div class="field">
+              <label for="representativeRole">Role</label>
+              <select id="representativeRole" required>
+                <option value="">Select role</option>
+                <option value="owner">Owner</option>
+                <option value="director">Director</option>
+                <option value="manager_on_licence">
+                  Manager named on licence
+                </option>
+                <option value="authorized_representative">
+                  Authorized representative
+                </option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="representativeControlMethod"
+                >Authority evidence</label
+              >
+              <select id="representativeControlMethod" required>
+                <option value="">Select method</option>
+                <option value="named_on_registration">
+                  Named on registration / licence
+                </option>
+                <option value="authority_document">
+                  Separate authority document
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div id="authorityDocumentWrap" class="field hidden">
+            <label for="authorityDocument"
+              >Representative authority document</label
+            >
+            <input
+              id="authorityDocument"
+              type="file"
+              accept="application/pdf,image/jpeg,image/png,image/webp"
+            />
+            <div class="hint">
+              Required for an authorized representative or when authority is
+              established by a separate document.
+            </div>
+          </div>
+
+          <div class="identity-note">
+            After the business evidence is submitted, Kaarox opens Veriff for
+            the representative's government-ID and face/liveness identity check.
+            Kaarox does not ask you to upload the ID or selfie into this
+            business form.
+          </div>
+        </section>
+
+        <section class="section">
+          <h2>Confirmations</h2>
+          <label class="check">
+            <input id="authorityConfirmed" type="checkbox" required />
+            <span
+              >I confirm that I am authorized to represent this business and
+              that the information submitted is accurate.</span
+            >
+          </label>
+          <label class="check">
+            <input id="privacyNoticeAccepted" type="checkbox" required />
+            <span
+              >I have read and accept the Kaarox privacy notice for business and
+              identity verification.</span
+            >
+          </label>
+          <label class="check">
+            <input id="termsAccepted" type="checkbox" required />
+            <span
+              >I agree to the Kaarox terms applicable to business
+              verification.</span
+            >
+          </label>
+        </section>
+
+        <button id="verifyNowBtn" class="button" type="submit" disabled>
+          Submit &amp; Verify Identity
         </button>
-      </header>
-
-      <div id="status" role="status" aria-live="polite"></div>
-
-      <form id="signInForm" class="panel">
-        <h2>Reviewer sign in</h2>
-        <label for="reviewerEmail">Email</label>
-        <input
-          id="reviewerEmail"
-          type="email"
-          autocomplete="username"
-          required
-        />
-        <label for="reviewerPassword">Password</label>
-        <input
-          id="reviewerPassword"
-          type="password"
-          autocomplete="current-password"
-          required
-        />
-        <div class="actions">
-          <button class="primary" type="submit">Sign in securely</button>
-        </div>
-        <p class="muted">
-          Access also requires an administrator or
-          business-verification-reviewer Firebase custom claim.
+        <p class="secure-note">
+          A badge is not issued until the Veriff identity decision is approved
+          and Kaarox approves the business registration and representative
+          authority.
         </p>
       </form>
-
-      <section id="reviewWorkspace" class="hidden">
-        <div class="actions">
-          <button id="refreshButton" class="secondary" type="button">
-            Refresh pending applications
-          </button>
-        </div>
-        <div id="reviewList"></div>
-      </section>
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-functions-compat.js"></script>
+
     <script>
-      (() => {
-        "use strict";
+      "use strict";
 
-        const firebaseConfig = {
-          apiKey: "AIzaSyBs7pRnnJKpY39oQ-8TUaTSi_3ZgYfnt8s",
-          authDomain: "nexus-601bd.firebaseapp.com",
-          projectId: "nexus-601bd",
-          storageBucket: "nexus-601bd.appspot.com",
-          messagingSenderId: "873657897341",
-          appId: "1:873657897341:web:f071a476f9372e3b523c14",
+      const firebaseConfig = {
+        apiKey: "AIzaSyBs7pRnnJKpY39oQ-8TUaTSi_3ZgYfnt8s",
+        authDomain: "nexus-601bd.firebaseapp.com",
+        projectId: "nexus-601bd",
+        storageBucket: "nexus-601bd.appspot.com",
+        messagingSenderId: "873657897341",
+        appId: "1:873657897341:web:f071a476f9372e3b523c14",
+        measurementId: "G-Q3PNQ3NYYZ",
+      };
+
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+      const storage = firebase.storage();
+      const functions = firebase.app().functions("europe-west1");
+
+      const NOTICE_VERSION = "2026-08-10";
+      const MAX_FILE_BYTES = 5 * 1024 * 1024;
+      const ALLOWED_MIME = new Set([
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+      ]);
+
+      const statusCard = document.getElementById("statusCard");
+      const form = document.getElementById("verificationForm");
+      const verifyButton = document.getElementById("verifyNowBtn");
+      const emailInput = document.getElementById("userEmail");
+      const roleInput = document.getElementById("representativeRole");
+      const controlMethodInput = document.getElementById(
+        "representativeControlMethod",
+      );
+      const authorityDocumentWrap = document.getElementById(
+        "authorityDocumentWrap",
+      );
+      const authorityDocumentInput =
+        document.getElementById("authorityDocument");
+
+      let activeVerificationId = "";
+      let unsubscribeVerification = null;
+      let terminalEventSent = "";
+      let authenticatedUid = "";
+
+      function postToRN(payload) {
+        try {
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+          }
+        } catch (_) {}
+      }
+
+      function showStatus(message, type = "info") {
+        statusCard.className = `status ${type}`;
+        statusCard.textContent = message;
+      }
+
+      function clearStatus() {
+        statusCard.className = "status";
+        statusCard.textContent = "";
+      }
+
+      function humanError(error, fallback) {
+        const text = String(error?.message || "")
+          .replace(/^Firebase:\s*/i, "")
+          .trim();
+        return text || fallback;
+      }
+
+      function createVerificationId() {
+        const bytes = new Uint8Array(16);
+        crypto.getRandomValues(bytes);
+        return Array.from(bytes, (byte) =>
+          byte.toString(16).padStart(2, "0"),
+        ).join("");
+      }
+
+      function detectedMimeFromHeader(bytes) {
+        const hex = Array.from(bytes)
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+        if (hex.startsWith("25504446")) return "application/pdf";
+        if (hex.startsWith("ffd8ff")) return "image/jpeg";
+        if (hex.startsWith("89504e470d0a1a0a")) return "image/png";
+        if (hex.startsWith("52494646") && hex.slice(16, 24) === "57454250")
+          return "image/webp";
+        return "";
+      }
+
+      async function sha256Hex(file) {
+        const bytes = await file.arrayBuffer();
+        const digest = await crypto.subtle.digest("SHA-256", bytes);
+        return Array.from(new Uint8Array(digest), (b) =>
+          b.toString(16).padStart(2, "0"),
+        ).join("");
+      }
+
+      async function preflightFile(file, label) {
+        if (!file) throw new Error(`${label} is required.`);
+        if (file.size <= 0 || file.size > MAX_FILE_BYTES) {
+          throw new Error(`${label} must be no larger than 5 MB.`);
+        }
+        const head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+        const detectedMime = detectedMimeFromHeader(head);
+        if (!ALLOWED_MIME.has(detectedMime)) {
+          throw new Error(`${label} must be a PDF, JPEG, PNG or WebP file.`);
+        }
+        return {
+          mime: detectedMime,
+          sha256: await sha256Hex(file),
         };
-        const FUNCTIONS_REGION = "europe-west1";
+      }
 
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        const functions = firebase.app().functions(FUNCTIONS_REGION);
-        const getEvidence = functions.httpsCallable(
-          "reviewerGetBusinessEvidence",
+      async function uploadEvidence(file, path, label) {
+        const checked = await preflightFile(file, label);
+        const ref = storage.ref().child(path);
+        await ref.put(file, {
+          contentType: checked.mime,
+          cacheControl: "private,max-age=0,no-store",
+        });
+        return { path, sha256: checked.sha256 };
+      }
+
+      function requiresAuthorityDocument() {
+        return (
+          roleInput.value === "authorized_representative" ||
+          controlMethodInput.value === "authority_document"
         );
-        const submitReview = functions.httpsCallable(
-          "reviewBusinessVerification",
+      }
+
+      function updateAuthorityRequirement() {
+        const required = requiresAuthorityDocument();
+        authorityDocumentWrap.classList.toggle("hidden", !required);
+        authorityDocumentInput.required = required;
+        if (!required) authorityDocumentInput.value = "";
+      }
+
+      roleInput.addEventListener("change", updateAuthorityRequirement);
+      controlMethodInput.addEventListener("change", updateAuthorityRequirement);
+
+      function readBusinessPayload() {
+        const countryCode = document
+          .getElementById("countryCode")
+          .value.trim()
+          .toUpperCase();
+        if (!/^[A-Z]{2}$/.test(countryCode)) {
+          throw new Error(
+            "Country code must contain exactly two letters, for example AE.",
+          );
+        }
+
+        const website = document.getElementById("businessWebsite").value.trim();
+        if (website && !/^https:\/\//i.test(website)) {
+          throw new Error("Business website must start with https://");
+        }
+
+        return {
+          countryCode,
+          legalBusinessName: document
+            .getElementById("legalBusinessName")
+            .value.trim(),
+          tradeName: document.getElementById("tradeName").value.trim(),
+          licenseNumber: document.getElementById("licenseNumber").value.trim(),
+          issuingAuthority: document
+            .getElementById("issuingAuthority")
+            .value.trim(),
+          licenseExpiryDate:
+            document.getElementById("licenseExpiryDate").value || "",
+          licensedActivities: document
+            .getElementById("licensedActivities")
+            .value.trim(),
+          taxId: document.getElementById("taxId").value.trim(),
+          businessWebsite: website,
+          businessEmail: document.getElementById("businessEmail").value.trim(),
+          representativeName: document
+            .getElementById("representativeName")
+            .value.trim(),
+          representativeRole: roleInput.value,
+          representativeControlMethod: controlMethodInput.value,
+          confirmations: {
+            authorityConfirmed:
+              document.getElementById("authorityConfirmed").checked,
+            privacyNoticeAccepted: document.getElementById(
+              "privacyNoticeAccepted",
+            ).checked,
+            termsAccepted: document.getElementById("termsAccepted").checked,
+            noticeVersion: NOTICE_VERSION,
+          },
+        };
+      }
+
+      function validateFormForSubmission() {
+        updateAuthorityRequirement();
+        if (!form.reportValidity()) {
+          throw new Error("Complete all required verification fields.");
+        }
+        const business = readBusinessPayload();
+        if (
+          !business.confirmations.authorityConfirmed ||
+          !business.confirmations.privacyNoticeAccepted ||
+          !business.confirmations.termsAccepted
+        ) {
+          throw new Error("All verification confirmations must be accepted.");
+        }
+        return business;
+      }
+
+      async function startIdentityCheck(verificationId) {
+        showStatus(
+          "Preparing the representative identity check…",
+          "processing",
+        );
+        verifyButton.textContent = "Starting identity check…";
+
+        const createKycSession = functions.httpsCallable("createKycSession");
+        const response = await createKycSession({ verificationId });
+        const startUrl = String(response?.data?.startUrl || "");
+        const sessionId = String(response?.data?.sessionId || "");
+        if (!startUrl || !sessionId) {
+          throw new Error("The identity-check session could not be created.");
+        }
+
+        showStatus(
+          "Identity check ready. Complete the Veriff steps to continue.",
+          "processing",
+        );
+        postToRN({ event: "startKyc", url: startUrl, sessionId });
+      }
+
+      async function submitNewVerification(user) {
+        const business = validateFormForSubmission();
+        const verificationId = createVerificationId();
+        const licenseFile = document.getElementById("licenseDocument").files[0];
+        const authorityFile = authorityDocumentInput.files[0];
+
+        showStatus("Validating and uploading business evidence…", "processing");
+        verifyButton.textContent = "Uploading evidence…";
+
+        const base = `verification-submissions/${user.uid}/${verificationId}`;
+        const licenseDocument = await uploadEvidence(
+          licenseFile,
+          `${base}/business-registration`,
+          "Business registration document",
         );
 
-        const signInForm = document.getElementById("signInForm");
-        const signOutButton = document.getElementById("signOutButton");
-        const reviewWorkspace = document.getElementById("reviewWorkspace");
-        const reviewList = document.getElementById("reviewList");
-        const refreshButton = document.getElementById("refreshButton");
-        const status = document.getElementById("status");
-
-        function setStatus(message, kind = "visible") {
-          status.className = `${kind} visible`;
-          status.textContent = message;
+        let authorityDocument = null;
+        if (requiresAuthorityDocument()) {
+          authorityDocument = await uploadEvidence(
+            authorityFile,
+            `${base}/representative-authority`,
+            "Representative authority document",
+          );
         }
 
-        function clearStatus() {
-          status.className = "";
-          status.textContent = "";
-        }
-
-        function node(tag, className = "", text = "") {
-          const element = document.createElement(tag);
-          if (className) element.className = className;
-          if (text) element.textContent = text;
-          return element;
-        }
-
-        function valueText(value) {
-          if (value == null || value === "") return "Not provided";
-          if (value?.toDate) return value.toDate().toLocaleDateString();
-          return String(value);
-        }
-
-        function addValue(grid, label, value) {
-          const wrap = node("div", "field-value");
-          wrap.append(node("strong", "", label));
-          wrap.append(node("span", "", valueText(value)));
-          grid.append(wrap);
-        }
-
-        function inputField(labelText, placeholder = "") {
-          const wrap = node("label", "", labelText);
-          const input = document.createElement("input");
-          input.type = "text";
-          input.placeholder = placeholder;
-          wrap.append(input);
-          return { wrap, input };
-        }
-
-        function checkbox(labelText) {
-          const wrap = node("label", "check");
-          const input = document.createElement("input");
-          input.type = "checkbox";
-          wrap.append(input, node("span", "", labelText));
-          return { wrap, input };
-        }
-
-        async function loadDocuments(uid, container, button) {
-          button.disabled = true;
-          try {
-            const response = await getEvidence({ uid });
-            const documents = Array.isArray(response?.data?.documents)
-              ? response.data.documents
-              : [];
-            container.replaceChildren();
-            if (!documents.length) {
-              container.append(
-                node("span", "muted", "No documents available."),
-              );
-              return;
-            }
-            for (const documentData of documents) {
-              const link = node(
-                "a",
-                "",
-                documentData.kind === "authority"
-                  ? "Open authority document"
-                  : "Open registration document",
-              );
-              link.href = String(documentData.url || "");
-              link.target = "_blank";
-              link.rel = "noopener noreferrer";
-              container.append(link);
-            }
-          } catch (error) {
-            setStatus(
-              error?.message || "Documents could not be opened.",
-              "error",
-            );
-          } finally {
-            button.disabled = false;
-          }
-        }
-
-        function renderApplication(snapshot) {
-          const data = snapshot.data() || {};
-          const business = data.business || {};
-          const representative = data.representative || {};
-          const card = node("article", "review-card");
-          card.append(
-            node("h2", "", business.legalBusinessName || "Unnamed business"),
-          );
-          card.append(node("div", "muted", `UID: ${snapshot.id}`));
-
-          const grid = node("div", "grid");
-          addValue(grid, "Country", business.countryCode);
-          addValue(grid, "Trading name", business.tradeName);
-          addValue(grid, "Registration / licence", business.licenseNumber);
-          addValue(grid, "Issuing authority", business.issuingAuthority);
-          addValue(grid, "Expiry", business.licenseExpiryDate);
-          addValue(grid, "Activities", business.licensedActivities);
-          addValue(grid, "Website", business.businessWebsite);
-          addValue(grid, "Business email", business.businessEmail);
-          addValue(
-            grid,
-            "Representative",
-            representative.name || business.representativeName,
-          );
-          addValue(
-            grid,
-            "Role",
-            representative.role || business.representativeRole,
-          );
-          addValue(
-            grid,
-            "Authority method",
-            representative.controlMethod ||
-              business.representativeControlMethod,
-          );
-          addValue(grid, "Submitted", data.submittedAt);
-          card.append(grid);
-
-          const documentActions = node("div", "actions");
-          const documentButton = node(
-            "button",
-            "secondary",
-            "Load private evidence",
-          );
-          documentButton.type = "button";
-          const documentLinks = node("div", "document-links");
-          documentButton.addEventListener("click", () =>
-            loadDocuments(snapshot.id, documentLinks, documentButton),
-          );
-          documentActions.append(documentButton);
-          card.append(documentActions, documentLinks);
-
-          const registryName = inputField(
-            "Official registry or issuing authority used",
-            "Example: UAE National Economic Register",
-          );
-          registryName.input.value = business.issuingAuthority || "";
-          const registryReference = inputField(
-            "Official registry reference or lookup URL",
-            "Official result URL or reference number",
-          );
-          card.append(registryName.wrap, registryReference.wrap);
-
-          const registrationActive = checkbox(
-            "The official registry shows the registration as active.",
-          );
-          const matchedLegalName = checkbox(
-            "The legal business name matches the official registry.",
-          );
-          const matchedRegistrationNumber = checkbox(
-            "The registration or licence number matches the official registry.",
-          );
-          const representativeAuthorityConfirmed = checkbox(
-            "The documents confirm the applicant's authority to represent the business.",
-          );
-          const matchedActivities = checkbox(
-            "The stated activities match the registration where applicable.",
-          );
-          card.append(
-            registrationActive.wrap,
-            matchedLegalName.wrap,
-            matchedRegistrationNumber.wrap,
-            representativeAuthorityConfirmed.wrap,
-            matchedActivities.wrap,
-          );
-
-          const rejectionReason = inputField(
-            "Rejection reason code",
-            "Example: registration_not_found",
-          );
-          const rejectionMessage = node(
-            "label",
-            "",
-            "Message shown to the applicant",
-          );
-          const rejectionText = document.createElement("textarea");
-          rejectionText.maxLength = 500;
-          rejectionMessage.append(rejectionText);
-          card.append(rejectionReason.wrap, rejectionMessage);
-
-          const actions = node("div", "actions");
-          const approveButton = node(
-            "button",
-            "primary",
-            "Approve Registered Business badge",
-          );
-          approveButton.type = "button";
-          const rejectButton = node("button", "danger", "Reject application");
-          rejectButton.type = "button";
-
-          approveButton.addEventListener("click", async () => {
-            approveButton.disabled = true;
-            rejectButton.disabled = true;
-            clearStatus();
-            try {
-              await submitReview({
-                uid: snapshot.id,
-                decision: "approved",
-                registryName: registryName.input.value.trim(),
-                registryReference: registryReference.input.value.trim(),
-                registrationActive: registrationActive.input.checked,
-                matchedLegalName: matchedLegalName.input.checked,
-                matchedRegistrationNumber:
-                  matchedRegistrationNumber.input.checked,
-                representativeAuthorityConfirmed:
-                  representativeAuthorityConfirmed.input.checked,
-                matchedActivities: matchedActivities.input.checked,
-              });
-              setStatus("Registered Business badge approved.", "success");
-              await loadPendingApplications();
-            } catch (error) {
-              setStatus(error?.message || "Approval failed.", "error");
-            } finally {
-              approveButton.disabled = false;
-              rejectButton.disabled = false;
-            }
-          });
-
-          rejectButton.addEventListener("click", async () => {
-            approveButton.disabled = true;
-            rejectButton.disabled = true;
-            clearStatus();
-            try {
-              await submitReview({
-                uid: snapshot.id,
-                decision: "rejected",
-                reasonCode: rejectionReason.input.value.trim(),
-                userMessage: rejectionText.value.trim(),
-              });
-              setStatus("Application rejected.", "success");
-              await loadPendingApplications();
-            } catch (error) {
-              setStatus(error?.message || "Rejection failed.", "error");
-            } finally {
-              approveButton.disabled = false;
-              rejectButton.disabled = false;
-            }
-          });
-
-          actions.append(approveButton, rejectButton);
-          card.append(actions);
-          return card;
-        }
-
-        async function loadPendingApplications() {
-          refreshButton.disabled = true;
-          reviewList.replaceChildren(
-            node("p", "muted", "Loading pending applications…"),
-          );
-          try {
-            const result = await db
-              .collection("verifications")
-              .where("status", "==", "pending_review")
-              .limit(50)
-              .get();
-            reviewList.replaceChildren();
-            if (result.empty) {
-              reviewList.append(node("p", "muted", "No pending applications."));
-              return;
-            }
-            for (const snapshot of result.docs) {
-              reviewList.append(renderApplication(snapshot));
-            }
-          } catch (error) {
-            reviewList.replaceChildren();
-            setStatus(
-              error?.message || "Applications could not be loaded.",
-              "error",
-            );
-          } finally {
-            refreshButton.disabled = false;
-          }
-        }
-
-        signInForm.addEventListener("submit", async (event) => {
-          event.preventDefault();
-          clearStatus();
-          try {
-            await auth.signInWithEmailAndPassword(
-              document.getElementById("reviewerEmail").value.trim(),
-              document.getElementById("reviewerPassword").value,
-            );
-          } catch (error) {
-            setStatus(error?.message || "Sign-in failed.", "error");
-          }
+        verifyButton.textContent = "Submitting verification…";
+        const submitBusinessVerification = functions.httpsCallable(
+          "submitBusinessVerification",
+        );
+        const response = await submitBusinessVerification({
+          verificationId,
+          business,
+          evidence: { licenseDocument, authorityDocument },
         });
 
-        signOutButton.addEventListener("click", () => auth.signOut());
-        refreshButton.addEventListener("click", loadPendingApplications);
+        const status = String(response?.data?.status || "");
+        if (status !== "awaiting_identity") {
+          throw new Error(
+            "The verification request did not enter the expected identity-check stage.",
+          );
+        }
 
-        auth.onAuthStateChanged(async (user) => {
-          clearStatus();
-          signInForm.classList.toggle("hidden", !!user);
-          signOutButton.classList.toggle("hidden", !user);
-          reviewWorkspace.classList.add("hidden");
-          reviewList.replaceChildren();
-          if (!user) return;
+        activeVerificationId = verificationId;
+        await startIdentityCheck(verificationId);
+      }
 
+      async function handleSubmit(event) {
+        event.preventDefault();
+        if (verifyButton.disabled) return;
+
+        const user = auth.currentUser;
+        if (!user) {
+          showStatus(
+            "Sign in to Kaarox before starting verification.",
+            "error",
+          );
+          return;
+        }
+
+        verifyButton.disabled = true;
+        clearStatus();
+        try {
+          if (activeVerificationId) {
+            await startIdentityCheck(activeVerificationId);
+          } else {
+            await submitNewVerification(user);
+          }
+        } catch (error) {
+          console.error("Business verification error", error);
+          showStatus(
+            humanError(
+              error,
+              "Business verification could not be started. Please try again.",
+            ),
+            "error",
+          );
+        } finally {
+          verifyButton.disabled = !auth.currentUser;
+          verifyButton.textContent = activeVerificationId
+            ? "Resume Identity Check"
+            : "Submit & Verify Identity";
+        }
+      }
+
+      form.addEventListener("submit", handleSubmit);
+
+      function watchVerification(user) {
+        if (unsubscribeVerification) {
           try {
-            const token = await user.getIdTokenResult(true);
-            const authorised =
-              token.claims.admin === true ||
-              token.claims.role === "admin" ||
-              token.claims.businessVerificationReviewer === true;
-            if (!authorised) {
-              setStatus(
-                "This account does not have business-verification reviewer access.",
+            unsubscribeVerification();
+          } catch (_) {}
+          unsubscribeVerification = null;
+        }
+        terminalEventSent = "";
+        if (!user) return;
+
+        unsubscribeVerification = db
+          .collection("verifications")
+          .doc(user.uid)
+          .onSnapshot(
+            (snapshot) => {
+              if (!snapshot.exists) {
+                activeVerificationId = "";
+                verifyButton.textContent = "Submit & Verify Identity";
+                return;
+              }
+
+              const record = snapshot.data() || {};
+              const status = String(
+                record.status || "not_started",
+              ).toLowerCase();
+              const identityStatus = String(
+                record?.identity?.status || "",
+              ).toLowerCase();
+              activeVerificationId = ["awaiting_identity"].includes(status)
+                ? String(record.verificationId || "")
+                : "";
+
+              if (status === "awaiting_identity") {
+                verifyButton.textContent = "Resume Identity Check";
+                showStatus(
+                  identityStatus === "resubmission_requested"
+                    ? "Veriff requested another identity submission. Tap Resume Identity Check to continue."
+                    : identityStatus === "review"
+                      ? "The representative identity check is being reviewed."
+                      : "Business evidence received. Complete the representative identity check.",
+                  "processing",
+                );
+                return;
+              }
+
+              if (status === "pending_review") {
+                verifyButton.disabled = true;
+                showStatus(
+                  "Identity approved. Kaarox is now checking the business registration and representative authority. No badge is displayed until that review is approved.",
+                  "success",
+                );
+                if (terminalEventSent !== "verificationSubmitted") {
+                  terminalEventSent = "verificationSubmitted";
+                  postToRN({ event: "verificationSubmitted", status });
+                }
+                return;
+              }
+
+              if (status === "verified") {
+                verifyButton.disabled = true;
+                showStatus(
+                  "Business verification is approved and current.",
+                  "success",
+                );
+                if (terminalEventSent !== "verificationSubmitted") {
+                  terminalEventSent = "verificationSubmitted";
+                  postToRN({ event: "verificationSubmitted", status });
+                }
+                return;
+              }
+
+              if (status === "rejected") {
+                activeVerificationId = "";
+                verifyButton.disabled = false;
+                verifyButton.textContent = "Submit & Verify Identity";
+                if (
+                  ["declined", "expired", "abandoned"].includes(identityStatus)
+                ) {
+                  showStatus(
+                    "The representative identity check was not approved. You can submit a new verification request.",
+                    "error",
+                  );
+                  if (terminalEventSent !== "identityRejected") {
+                    terminalEventSent = "identityRejected";
+                    postToRN({
+                      event: "identityRejected",
+                      status: identityStatus,
+                    });
+                  }
+                } else {
+                  showStatus(
+                    "The business verification request was not approved. Review the reason in Kaarox settings or contact support.",
+                    "error",
+                  );
+                }
+                return;
+              }
+
+              if (status === "expired") {
+                activeVerificationId = "";
+                verifyButton.disabled = false;
+                verifyButton.textContent = "Submit & Verify Identity";
+                showStatus(
+                  "The previous business verification expired. Submit a new verification to renew the badge.",
+                  "error",
+                );
+              }
+            },
+            (error) => {
+              console.warn("Verification status listener failed", error);
+              showStatus(
+                "Verification status could not be loaded. Please try again.",
                 "error",
               );
-              return;
-            }
-            reviewWorkspace.classList.remove("hidden");
-            await loadPendingApplications();
-          } catch (error) {
-            setStatus(
-              error?.message || "Reviewer access could not be confirmed.",
-              "error",
-            );
+            },
+          );
+      }
+
+      auth.onAuthStateChanged((user) => {
+        authenticatedUid = user?.uid || "";
+        emailInput.value = user?.email || "";
+        verifyButton.disabled = !user;
+        if (!user) {
+          activeVerificationId = "";
+          showStatus(
+            "Preparing secure Kaarox verification session…",
+            "processing",
+          );
+        } else {
+          clearStatus();
+        }
+        watchVerification(user);
+      });
+
+      async function applyInjectedAuth(message) {
+        if (!message || typeof message !== "object") return;
+        if (message.event && message.event !== "kaaroxVerificationAuth") return;
+        if (message.email) emailInput.value = String(message.email);
+        if (!message.customToken) return;
+
+        try {
+          const credential = await auth.signInWithCustomToken(
+            String(message.customToken),
+          );
+          if (authenticatedUid && credential.user.uid !== authenticatedUid) {
+            throw new Error("Verification session user mismatch.");
           }
-        });
-      })();
+        } catch (error) {
+          console.error("Verification web authentication failed", error);
+          showStatus(
+            "The secure Kaarox verification session could not be opened. Return to the app and try again.",
+            "error",
+          );
+        }
+      }
+
+      window.addEventListener("message", (event) => {
+        let data = event?.data;
+        try {
+          if (typeof data === "string") data = JSON.parse(data);
+        } catch (_) {
+          return;
+        }
+        applyInjectedAuth(data);
+      });
+
+      document.addEventListener("message", (event) => {
+        let data = event?.data;
+        try {
+          if (typeof data === "string") data = JSON.parse(data);
+        } catch (_) {
+          return;
+        }
+        applyInjectedAuth(data);
+      });
+
+      updateAuthorityRequirement();
+      showStatus("Preparing secure Kaarox verification session…", "processing");
+      setTimeout(() => postToRN({ event: "kycFormReady" }), 0);
+
+      window.addEventListener("beforeunload", () => {
+        if (unsubscribeVerification) unsubscribeVerification();
+      });
     </script>
   </body>
 </html>
