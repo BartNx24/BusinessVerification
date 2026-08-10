@@ -906,7 +906,7 @@
               if (status === "pending_review") {
                 verifyButton.disabled = true;
                 showStatus(
-                  "Identity approved. Kaarox is now checking the business registration and representative authority. No badge is displayed until that review is approved.",
+                  "Identity approved. Kaarox is automatically checking the business registration and representative authority. High-confidence matches are approved automatically; uncertain cases are sent for manual review.",
                   "success",
                 );
                 if (terminalEventSent !== "verificationSubmitted") {
