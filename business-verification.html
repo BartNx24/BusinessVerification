@@ -906,7 +906,7 @@
               if (status === "pending_review") {
                 verifyButton.disabled = true;
                 showStatus(
-                  "Identity approved. Kaarox is automatically checking the business registration and representative authority. High-confidence matches are approved automatically; uncertain cases are sent for manual review.",
+                  "Identity approved. Kaarox is automatically checking the business registration and representative authority. Kaarox checks the core licence details automatically. Genuine licences are approved when the legal name, licence number, expiry and representative authority can be confirmed; uncertain OCR results are sent for manual review.",
                   "success",
                 );
                 if (terminalEventSent !== "verificationSubmitted") {
