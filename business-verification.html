@@ -433,11 +433,11 @@
       </form>
     </main>
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-functions-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-functions-compat.js"></script>
 
     <script>
       "use strict";
@@ -487,6 +487,7 @@
       let terminalEventSent = "";
       let authenticatedUid = "";
       let injectedAccountEmail = "";
+      let secureVerificationSessionReady = false;
 
       function postToRN(payload) {
         try {
@@ -507,10 +508,27 @@
       }
 
       function humanError(error, fallback) {
-        const text = String(error?.message || "")
+        const message = String(error?.message || "")
           .replace(/^Firebase:\s*/i, "")
           .trim();
-        return text || fallback;
+
+        const serverResponse = String(
+          error?.serverResponse ||
+            error?.customData?.serverResponse ||
+            error?.customData?._serverResponse ||
+            "",
+        ).trim();
+
+        const code = String(error?.code || "").trim();
+
+        const parts = [];
+        if (message) parts.push(message);
+        if (code && !message.includes(code)) parts.push(`Code: ${code}`);
+        if (serverResponse && !message.includes(serverResponse)) {
+          parts.push(`Server: ${serverResponse}`);
+        }
+
+        return parts.join("\n") || fallback;
       }
 
       function createVerificationId() {
@@ -575,26 +593,70 @@
         verificationId,
         label,
       ) {
+        if (!secureVerificationSessionReady || !auth.currentUser) {
+          throw new Error(
+            "The secure Kaarox verification session is not ready. Return to Kaarox and reopen verification.",
+          );
+        }
+
+        const tokenResult = await auth.currentUser.getIdTokenResult(true);
+        if (tokenResult?.claims?.verificationWeb !== true) {
+          secureVerificationSessionReady = false;
+          verifyButton.disabled = true;
+          throw new Error(
+            "The secure verification permission is missing. Return to Kaarox and reopen verification.",
+          );
+        }
+
         const checked = await preflightFile(file, label);
         const path = `${basePath}/${fileStem}.${checked.extension}`;
         const ref = storage.ref().child(path);
 
-        await ref.put(file, {
+        const metadata = {
           contentType: checked.mime,
-          cacheControl: "private,max-age=0,no-store",
           customMetadata: {
-            verificationId,
-            evidenceKind,
-            sha256: checked.sha256,
+            verificationId: String(verificationId),
+            evidenceKind: String(evidenceKind),
+            sha256: String(checked.sha256),
           },
-        });
-
-        return {
-          path,
-          contentType: checked.mime,
-          size: file.size,
-          sha256: checked.sha256,
         };
+
+        try {
+          const snapshot = await new Promise((resolve, reject) => {
+            const task = ref.put(file, metadata);
+            task.on(
+              "state_changed",
+              () => {},
+              (error) => reject(error),
+              () => resolve(task.snapshot),
+            );
+          });
+
+          const uploadedMetadata = snapshot?.metadata || {};
+          return {
+            path,
+            contentType: uploadedMetadata.contentType || checked.mime,
+            size: Number(uploadedMetadata.size || file.size),
+            sha256: checked.sha256,
+          };
+        } catch (error) {
+          console.error("Verification Storage upload failed", {
+            code: error?.code,
+            message: error?.message,
+            serverResponse:
+              error?.serverResponse ||
+              error?.customData?.serverResponse ||
+              error?.customData?._serverResponse ||
+              "",
+            bucket: firebaseConfig.storageBucket,
+            path,
+            contentType: checked.mime,
+            fileSize: file.size,
+            evidenceKind,
+            verificationId,
+          });
+          throw error;
+        }
       }
 
       function requiresAuthorityDocument() {
@@ -760,11 +822,12 @@
         if (verifyButton.disabled) return;
 
         const user = auth.currentUser;
-        if (!user) {
+        if (!user || !secureVerificationSessionReady) {
           showStatus(
-            "Sign in to Kaarox before starting verification.",
+            "The secure Kaarox verification session is still preparing. Return to Kaarox and reopen verification if this does not clear.",
             "error",
           );
+          verifyButton.disabled = true;
           return;
         }
 
@@ -786,7 +849,7 @@
             "error",
           );
         } finally {
-          verifyButton.disabled = !auth.currentUser;
+          verifyButton.disabled = !auth.currentUser || !secureVerificationSessionReady;
           verifyButton.textContent = activeVerificationId
             ? "Resume Identity Check"
             : "Submit & Verify Identity";
@@ -916,39 +979,70 @@
       auth.onAuthStateChanged((user) => {
         authenticatedUid = user?.uid || "";
         emailInput.value = user?.email || injectedAccountEmail || "";
-        verifyButton.disabled = !user;
+
         if (!user) {
+          secureVerificationSessionReady = false;
+          verifyButton.disabled = true;
           activeVerificationId = "";
           showStatus(
             "Preparing secure Kaarox verification session…",
             "processing",
           );
-        } else {
-          clearStatus();
+          watchVerification(null);
+          return;
         }
+
+        verifyButton.disabled = !secureVerificationSessionReady;
         watchVerification(user);
       });
 
       async function applyInjectedAuth(message) {
         if (!message || typeof message !== "object") return;
         if (message.event && message.event !== "kaaroxVerificationAuth") return;
+
         if (message.email) {
           injectedAccountEmail = String(message.email).trim().toLowerCase();
           emailInput.value = injectedAccountEmail;
         }
+
         if (!message.customToken) return;
 
+        secureVerificationSessionReady = false;
+        verifyButton.disabled = true;
+
         try {
+          const previousUid = authenticatedUid;
           const credential = await auth.signInWithCustomToken(
             String(message.customToken),
           );
-          if (authenticatedUid && credential.user.uid !== authenticatedUid) {
+
+          if (previousUid && credential.user.uid !== previousUid) {
             throw new Error("Verification session user mismatch.");
           }
+
+          const tokenResult = await credential.user.getIdTokenResult(true);
+          if (tokenResult?.claims?.verificationWeb !== true) {
+            throw new Error(
+              "The verification session does not contain the required secure permission.",
+            );
+          }
+
+          authenticatedUid = credential.user.uid;
+          secureVerificationSessionReady = true;
+          emailInput.value =
+            credential.user.email || injectedAccountEmail || "";
+          verifyButton.disabled = false;
+          clearStatus();
+          watchVerification(credential.user);
         } catch (error) {
+          secureVerificationSessionReady = false;
+          verifyButton.disabled = true;
           console.error("Verification web authentication failed", error);
           showStatus(
-            "The secure Kaarox verification session could not be opened. Return to the app and try again.",
+            humanError(
+              error,
+              "The secure Kaarox verification session could not be opened. Return to the app and try again.",
+            ),
             "error",
           );
         }
