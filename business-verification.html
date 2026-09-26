@@ -225,10 +225,11 @@
               id="userEmail"
               type="email"
               readonly
+              aria-label="Signed-in Kaarox account email"
               placeholder="Preparing secure session…"
             />
             <div class="hint">
-              Your Kaarox password is never sent to this webpage.
+              This is the email of the signed-in Kaarox account. Your password is never sent to this webpage.
             </div>
           </div>
         </section>
@@ -717,6 +718,7 @@
       const form = document.getElementById("verificationForm");
       const verifyButton = document.getElementById("verifyNowBtn");
       const emailInput = document.getElementById("userEmail");
+      const businessEmailInput = document.getElementById("businessEmail");
       const roleInput = document.getElementById("representativeRole");
       const controlMethodInput = document.getElementById(
         "representativeControlMethod",
@@ -1124,4 +1126,264 @@
         terminalEventSent = "";
         if (!user) return;
 
-       
+        unsubscribeVerification = db
+          .collection("verifications")
+          .doc(user.uid)
+          .onSnapshot(
+            (snapshot) => {
+              if (!snapshot.exists) {
+                activeVerificationId = "";
+                verifyButton.textContent = "Submit & Verify Identity";
+                return;
+              }
+
+              const record = snapshot.data() || {};
+              const status = String(
+                record.status || "not_started",
+              ).toLowerCase();
+              const identityStatus = String(
+                record?.identity?.status ||
+                  record?.veriff?.status ||
+                  "",
+              )
+                .trim()
+                .toLowerCase();
+
+              const identityApproved = [
+                "approved",
+                "verified",
+                "accept",
+                "accepted",
+                "approved_verification",
+              ].includes(identityStatus);
+
+              const identityRejected = [
+                "declined",
+                "deny",
+                "denied",
+                "rejected",
+                "expired",
+                "abandoned",
+              ].includes(identityStatus);
+
+              const identityStage =
+                ["identity_required", "awaiting_identity", "processing"].includes(
+                  status,
+                ) ||
+                (status === "pending_review" && !identityApproved);
+
+              activeVerificationId = identityStage
+                ? String(record.verificationId || "")
+                : "";
+
+              if (identityStage) {
+                verifyButton.disabled = !secureVerificationSessionReady;
+                verifyButton.textContent =
+                  identityStatus === "processing" ||
+                  identityStatus === "review" ||
+                  identityStatus === "created"
+                    ? "Resume Identity Check"
+                    : "Verify Identity";
+
+                showStatus(
+                  identityStatus === "resubmission_requested"
+                    ? "Veriff requested another identity submission. Tap Resume Identity Check to continue."
+                    : identityStatus === "review"
+                      ? "The representative identity check is being reviewed."
+                      : identityStatus === "processing" ||
+                          identityStatus === "created"
+                        ? "The representative identity check is in progress. Tap Resume Identity Check if you need to continue."
+                        : "Business evidence received. Complete the representative identity check.",
+                  "processing",
+                );
+                return;
+              }
+
+              if (status === "pending_review" && identityApproved) {
+                verifyButton.disabled = true;
+                showStatus(
+                  "Identity approved. Kaarox is now reviewing the business registration and representative authority.",
+                  "success",
+                );
+                if (terminalEventSent !== "verificationSubmitted") {
+                  terminalEventSent = "verificationSubmitted";
+                  postToRN({ event: "verificationSubmitted", status });
+                }
+                return;
+              }
+
+              if (status === "verified") {
+                verifyButton.disabled = true;
+                showStatus(
+                  "Business verification is approved and current.",
+                  "success",
+                );
+                if (terminalEventSent !== "verificationSubmitted") {
+                  terminalEventSent = "verificationSubmitted";
+                  postToRN({ event: "verificationSubmitted", status });
+                }
+                return;
+              }
+
+              if (status === "rejected") {
+                activeVerificationId = "";
+                verifyButton.disabled = false;
+                verifyButton.textContent = "Submit & Verify Identity";
+                if (identityRejected) {
+                  showStatus(
+                    "The representative identity check was not approved. You can submit a new verification request.",
+                    "error",
+                  );
+                  if (terminalEventSent !== "identityRejected") {
+                    terminalEventSent = "identityRejected";
+                    postToRN({
+                      event: "identityRejected",
+                      status: identityStatus,
+                    });
+                  }
+                } else {
+                  showStatus(
+                    "The business verification request was not approved. Review the reason in Kaarox settings or contact support.",
+                    "error",
+                  );
+                }
+                return;
+              }
+
+              if (status === "expired") {
+                activeVerificationId = "";
+                verifyButton.disabled = false;
+                verifyButton.textContent = "Submit & Verify Identity";
+                showStatus(
+                  "The previous business verification expired. Submit a new verification to renew the badge.",
+                  "error",
+                );
+              }
+            },
+            (error) => {
+              console.warn("Verification status listener failed", error);
+              showStatus(
+                "Verification status could not be loaded. Please try again.",
+                "error",
+              );
+            },
+          );
+      }
+
+      auth.onAuthStateChanged((user) => {
+        authenticatedUid = user?.uid || "";
+        const resolvedEmail = user?.email || injectedAccountEmail || "";
+        emailInput.value = resolvedEmail;
+        if (businessEmailInput && !businessEmailInput.value.trim() && resolvedEmail) {
+          businessEmailInput.value = resolvedEmail;
+        }
+
+        if (!user) {
+          secureVerificationSessionReady = false;
+          verifyButton.disabled = true;
+          activeVerificationId = "";
+          showStatus(
+            "Preparing secure Kaarox verification session…",
+            "processing",
+          );
+          watchVerification(null);
+          return;
+        }
+
+        verifyButton.disabled = !secureVerificationSessionReady;
+        watchVerification(user);
+      });
+
+      async function applyInjectedAuth(message) {
+        if (!message || typeof message !== "object") return;
+        if (message.event && message.event !== "kaaroxVerificationAuth") return;
+
+        if (message.email) {
+          injectedAccountEmail = String(message.email).trim().toLowerCase();
+          emailInput.value = injectedAccountEmail;
+          if (businessEmailInput && !businessEmailInput.value.trim()) {
+            businessEmailInput.value = injectedAccountEmail;
+          }
+        }
+
+        if (!message.customToken) return;
+
+        secureVerificationSessionReady = false;
+        verifyButton.disabled = true;
+
+        try {
+          const previousUid = authenticatedUid;
+          const credential = await auth.signInWithCustomToken(
+            String(message.customToken),
+          );
+
+          if (previousUid && credential.user.uid !== previousUid) {
+            throw new Error("Verification session user mismatch.");
+          }
+
+          const tokenResult = await credential.user.getIdTokenResult(true);
+          if (tokenResult?.claims?.verificationWeb !== true) {
+            throw new Error(
+              "The verification session does not contain the required secure permission.",
+            );
+          }
+
+          authenticatedUid = credential.user.uid;
+          secureVerificationSessionReady = true;
+          const authenticatedEmail =
+            credential.user.email || injectedAccountEmail || "";
+          emailInput.value = authenticatedEmail;
+          if (
+            businessEmailInput &&
+            !businessEmailInput.value.trim() &&
+            authenticatedEmail
+          ) {
+            businessEmailInput.value = authenticatedEmail;
+          }
+          verifyButton.disabled = false;
+          clearStatus();
+          watchVerification(credential.user);
+        } catch (error) {
+          secureVerificationSessionReady = false;
+          verifyButton.disabled = true;
+          console.error("Verification web authentication failed", error);
+          showStatus(
+            humanError(
+              error,
+              "The secure Kaarox verification session could not be opened. Return to the app and try again.",
+            ),
+            "error",
+          );
+        }
+      }
+
+      window.addEventListener("message", (event) => {
+        let data = event?.data;
+        try {
+          if (typeof data === "string") data = JSON.parse(data);
+        } catch (_) {
+          return;
+        }
+        applyInjectedAuth(data);
+      });
+
+      document.addEventListener("message", (event) => {
+        let data = event?.data;
+        try {
+          if (typeof data === "string") data = JSON.parse(data);
+        } catch (_) {
+          return;
+        }
+        applyInjectedAuth(data);
+      });
+
+      updateAuthorityRequirement();
+      showStatus("Preparing secure Kaarox verification session…", "processing");
+      setTimeout(() => postToRN({ event: "kycFormReady" }), 0);
+
+      window.addEventListener("beforeunload", () => {
+        if (unsubscribeVerification) unsubscribeVerification();
+      });
+    </script>
+  </body>
+</html>
